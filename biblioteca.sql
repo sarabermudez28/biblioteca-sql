@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 04-11-2026 a las 16:13:36
+-- Tiempo de generación: 04-11-2026 a las 21:53:38
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -109,6 +109,24 @@ INSERT INTO `genero` (`id_genero`, `desc_genero`) VALUES
 (4, 'Ética'),
 (5, 'Poesía'),
 (6, 'Talleres');
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `historial_acciones`
+--
+
+CREATE TABLE `historial_acciones` (
+  `id_accion` int(11) NOT NULL,
+  `tipo_accion` varchar(50) NOT NULL COMMENT 'prestamo, devolucion, baja_material, alta_material, modificacion_estado, observacion, etc',
+  `tabla_afectada` varchar(50) DEFAULT NULL COMMENT 'prestamos, inventario, libros, etc',
+  `id_registro` varchar(200) DEFAULT NULL COMMENT 'ID del registro afectado (id_prestamo, id_material, etc)',
+  `descripcion` text NOT NULL COMMENT 'Descripción legible de la acción',
+  `datos_antes` text DEFAULT NULL COMMENT 'JSON con datos antes del cambio (opcional)',
+  `datos_despues` text DEFAULT NULL COMMENT 'JSON con datos después del cambio (opcional)',
+  `dni_usuario` int(11) NOT NULL COMMENT 'DNI del usuario que realizó la acción',
+  `fecha_hora` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_spanish_ci COMMENT='Log completo de acciones del sistema (historial universal)';
 
 -- --------------------------------------------------------
 
@@ -330,6 +348,17 @@ ALTER TABLE `genero`
   ADD PRIMARY KEY (`id_genero`);
 
 --
+-- Indices de la tabla `historial_acciones`
+--
+ALTER TABLE `historial_acciones`
+  ADD PRIMARY KEY (`id_accion`),
+  ADD KEY `idx_tipo_accion` (`tipo_accion`),
+  ADD KEY `idx_tabla_afectada` (`tabla_afectada`),
+  ADD KEY `idx_id_registro` (`id_registro`),
+  ADD KEY `idx_dni_usuario` (`dni_usuario`),
+  ADD KEY `idx_fecha_hora` (`fecha_hora`);
+
+--
 -- Indices de la tabla `historial_observaciones`
 --
 ALTER TABLE `historial_observaciones`
@@ -432,6 +461,12 @@ ALTER TABLE `estado_material`
 --
 ALTER TABLE `genero`
   MODIFY `id_genero` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+
+--
+-- AUTO_INCREMENT de la tabla `historial_acciones`
+--
+ALTER TABLE `historial_acciones`
+  MODIFY `id_accion` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de la tabla `historial_observaciones`
