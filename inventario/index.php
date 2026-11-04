@@ -127,67 +127,40 @@ include __DIR__ . '/../includes/layout_header.php';
                 <p class="mb-0 text-muted">Por favor, selecciona una categoría en las pestañas superiores para comenzar a visualizar y filtrar los materiales.</p>
             </div>
         <?php else: ?>
-            <!-- Paginación con Flechas y Salto Directo a Página -->
+            <!-- Paginación compacta con input interactivo directo -->
             <?php if (isset($total_paginas) && $total_paginas > 1): ?>
                 <?php
-                // Construir query string auxiliar para mantener filtros y categoría en la paginación
                 $params_url = $_GET;
                 unset($params_url['pagina']);
                 $query_string = http_build_query($params_url);
                 $query_string = $query_string ? '&' . $query_string : '';
                 ?>
-                <div class="d-flex justify-content-center align-items-center py-3 bg-white border-top flex-wrap gap-3">
-                    <nav aria-label="Paginación compacta centrado">
-                        <ul class="pagination pagination-sm m-0">
-                            <!-- Botón Anterior -->
-                            <li class="page-item <?= ($pagina_actual <= 1) ? 'disabled' : '' ?>">
-                                <a class="page-link text-dark px-2 py-1" href="index.php?cat=<?= htmlspecialchars($cat_key) ?>&pagina=<?= $pagina_actual - 1 ?><?= $query_string ?>" title="Anterior">
-                                    <i class="bi bi-chevron-left"></i>
-                                </a>
-                            </li>
+                <nav aria-label="Paginación compacta">
+                    <ul class="pagination pagination-sm m-0 align-items-center">
+                        <!-- Botón Anterior -->
+                        <li class="page-item <?= ($pagina_actual <= 1) ? 'disabled' : '' ?>">
+                            <a class="page-link text-dark px-2 py-1" href="index.php?pagina=<?= $pagina_actual - 1 ?><?= $query_string ?>" title="Anterior">
+                                <i class="bi bi-chevron-left"></i>
+                            </a>
+                        </li>
 
-                            <!-- Indicador compacto (Ej: 1/5) -->
-                            <li class="page-item disabled">
-                                <span class="page-link bg-light text-dark px-2 py-1 border-0">
-                                    <?= $pagina_actual ?> / <?= $total_paginas ?>
-                                </span>
-                            </li>
+                        <!-- Campo de entrada integrado (actúa al presionar Enter) -->
+                        <li class="page-item px-1 d-flex align-items-center bg-white border border-top-0 border-bottom-0">
+                            <input type="number" id="inputSaltoPagina" min="1" max="<?= $total_paginas ?>" value="<?= $pagina_actual ?>" class="form-control form-control-sm text-center border-0 p-0 shadow-none" style="width: 40px;" title="Escribe el número y presiona Enter">
+                            <span class="text-muted small px-1">/ <?= $total_paginas ?></span>
+                        </li>
 
-                            <!-- Botón Siguiente -->
-                            <li class="page-item <?= ($pagina_actual >= $total_paginas) ? 'disabled' : '' ?>">
-                                <a class="page-link text-dark px-2 py-1" href="index.php?cat=<?= htmlspecialchars($cat_key) ?>&pagina=<?= $pagina_actual + 1 ?><?= $query_string ?>" title="Siguiente">
-                                    <i class="bi bi-chevron-right"></i>
-                                </a>
-                            </li>
-                        </ul>
-                    </nav>
-
-                    <!-- Formulario de Salto Directo a Página -->
-                    <form method="GET" action="index.php" class="d-flex align-items-center gap-1 m-0">
-                        <!-- Mantenemos todos los parámetros actuales en campos ocultos -->
-                        <input type="hidden" name="cat" value="<?= htmlspecialchars($cat_key) ?>">
-                        <?php if (!empty($_GET['q'])): ?>
-                            <input type="hidden" name="q" value="<?= htmlspecialchars($_GET['q']) ?>">
-                        <?php endif; ?>
-                        <?php if (!empty($_GET['id_categoria_filtro'])): ?>
-                            <input type="hidden" name="id_categoria_filtro" value="<?= htmlspecialchars($_GET['id_categoria_filtro']) ?>">
-                        <?php endif; ?>
-                        <?php foreach ($config['filtros'] as $filtro): ?>
-                            <?php if (!empty($_GET[$filtro['name']])): ?>
-                                <input type="hidden" name="<?= htmlspecialchars($filtro['name']) ?>" value="<?= htmlspecialchars($_GET[$filtro['name']]) ?>">
-                            <?php endif; ?>
-                        <?php endforeach; ?>
-
-                        <span class="text-muted small">Ir a pág:</span>
-                        <input type="number" name="pagina" min="1" max="<?= $total_paginas ?>" value="<?= $pagina_actual ?>" class="form-control form-control-sm text-center" style="width: 65px;" required>
-                        <button type="submit" class="btn btn-outline-secondary btn-sm px-2" title="Ir a la página">
-                            <i class="bi bi-arrow-right"></i>
-                        </button>
-                    </form>
-                </div>
+                        <!-- Botón Siguiente -->
+                        <li class="page-item <?= ($pagina_actual >= $total_paginas) ? 'disabled' : '' ?>">
+                            <a class="page-link text-dark px-2 py-1" href="index.php?pagina=<?= $pagina_actual + 1 ?><?= $query_string ?>" title="Siguiente">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
             <?php endif; ?>
 
-            
+
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
                     <thead class="table-dark">
@@ -409,6 +382,30 @@ include __DIR__ . '/../includes/layout_header.php';
                     }
                 });
             }
+            // Manejador para el salto inmediato al presionar Enter
+            const inputSaltoPagina = document.getElementById("inputSaltoPagina");
+            if (inputSaltoPagina) {
+                inputSaltoPagina.addEventListener("keydown", function(e) {
+                    if (e.key === "Enter") {
+                        e.preventDefault(); // Evita comportamientos por defecto del formulario
+
+                        let paginaDeseada = parseInt(this.value);
+                        let maxPaginas = parseInt(this.getAttribute("max"));
+
+                        if (isNaN(paginaDeseada) || paginaDeseada < 1) paginaDeseada = 1;
+                        if (paginaDeseada > maxPaginas) paginaDeseada = maxPaginas;
+
+                        // Conservamos todos los filtros GET actuales de la URL
+                        const urlParams = new URLSearchParams(window.location.search);
+                        urlParams.set("pagina", paginaDeseada);
+
+                        // Redirigimos de inmediato
+                        window.location.href = "index.php?" + urlParams.toString();
+                    }
+                });
+            }
+
+
         });
     </script>
 </body>
