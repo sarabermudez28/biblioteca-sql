@@ -169,12 +169,13 @@ if ($config !== null) {
     if ($total_paginas < 1) $total_paginas = 1;
     if ($pagina_actual > $total_paginas) $pagina_actual = $total_paginas;
 
-    // 2. Consulta final para obtener los registros limitados por página
-    $sql_final = "SELECT i.id_material, {$config['campos_select'][0]}, {$config['campos_select'][1]}, {$config['campos_select'][2]}, em.desc_estado_material AS estado " 
-                 . $sql_base 
-                 . " LIMIT $registros_por_pagina OFFSET $offset";
+    // 2. Consulta final para obtener los registros limitados por página (Ordenados de menor a mayor ID)
+$sql_final = "SELECT i.id_material, {$config['campos_select'][0]}, {$config['campos_select'][1]}, {$config['campos_select'][2]}, em.desc_estado_material AS estado " 
+             . $sql_base 
+             . " ORDER BY i.id_material ASC LIMIT $registros_por_pagina OFFSET $offset";
 
-    $stmt = db()->prepare($sql_final);
-    $stmt->execute($params);
-    $resultados = $stmt->fetchAll();
+$stmt = db()->prepare($sql_final);
+$stmt->execute($params);
+$resultados = $stmt->fetchAll();
+
 }

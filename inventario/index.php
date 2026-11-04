@@ -127,7 +127,7 @@ include __DIR__ . '/../includes/layout_header.php';
                 <p class="mb-0 text-muted">Por favor, selecciona una categoría en las pestañas superiores para comenzar a visualizar y filtrar los materiales.</p>
             </div>
         <?php else: ?>
-            <!-- Paginación compacta con input interactivo directo -->
+            <!-- Paginación compacta centrada -->
             <?php if (isset($total_paginas) && $total_paginas > 1): ?>
                 <?php
                 $params_url = $_GET;
@@ -135,31 +135,32 @@ include __DIR__ . '/../includes/layout_header.php';
                 $query_string = http_build_query($params_url);
                 $query_string = $query_string ? '&' . $query_string : '';
                 ?>
-                <nav aria-label="Paginación compacta">
-                    <ul class="pagination pagination-sm m-0 align-items-center">
-                        <!-- Botón Anterior -->
-                        <li class="page-item <?= ($pagina_actual <= 1) ? 'disabled' : '' ?>">
-                            <a class="page-link text-dark px-2 py-1" href="index.php?pagina=<?= $pagina_actual - 1 ?><?= $query_string ?>" title="Anterior">
-                                <i class="bi bi-chevron-left"></i>
-                            </a>
-                        </li>
+                <div class="d-flex justify-content-center py-3 bg-white">
+                    <nav aria-label="Paginación compacta centrada">
+                        <ul class="pagination pagination-sm m-0 align-items-center">
+                            <!-- Botón Anterior -->
+                            <li class="page-item <?= ($pagina_actual <= 1) ? 'disabled' : '' ?>">
+                                <a class="page-link text-dark px-2 py-1" href="index.php?pagina=<?= $pagina_actual - 1 ?><?= $query_string ?>" title="Anterior">
+                                    <i class="bi bi-chevron-left"></i>
+                                </a>
+                            </li>
 
-                        <!-- Campo de entrada integrado (actúa al presionar Enter) -->
-                        <li class="page-item px-1 d-flex align-items-center bg-white border border-top-0 border-bottom-0">
-                            <input type="number" id="inputSaltoPagina" min="1" max="<?= $total_paginas ?>" value="<?= $pagina_actual ?>" class="form-control form-control-sm text-center border-0 p-0 shadow-none" style="width: 40px;" title="Escribe el número y presiona Enter">
-                            <span class="text-muted small px-1">/ <?= $total_paginas ?></span>
-                        </li>
+                            <!-- Campo de entrada integrado (actúa al presionar Enter) -->
+                            <li class="page-item px-1 d-flex align-items-center bg-white border border-top-0 border-bottom-0">
+                                <input type="number" id="inputSaltoPagina" min="1" max="<?= $total_paginas ?>" value="<?= $pagina_actual ?>" class="form-control form-control-sm text-center border-0 p-0 shadow-none" style="width: 40px;" title="Escribe el número y presiona Enter">
+                                <span class="text-muted small px-1">/ <?= $total_paginas ?></span>
+                            </li>
 
-                        <!-- Botón Siguiente -->
-                        <li class="page-item <?= ($pagina_actual >= $total_paginas) ? 'disabled' : '' ?>">
-                            <a class="page-link text-dark px-2 py-1" href="index.php?pagina=<?= $pagina_actual + 1 ?><?= $query_string ?>" title="Siguiente">
-                                <i class="bi bi-chevron-right"></i>
-                            </a>
-                        </li>
-                    </ul>
-                </nav>
+                            <!-- Botón Siguiente -->
+                            <li class="page-item <?= ($pagina_actual >= $total_paginas) ? 'disabled' : '' ?>">
+                                <a class="page-link text-dark px-2 py-1" href="index.php?pagina=<?= $pagina_actual + 1 ?><?= $query_string ?>" title="Siguiente">
+                                    <i class="bi bi-chevron-right"></i>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
             <?php endif; ?>
-
 
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
