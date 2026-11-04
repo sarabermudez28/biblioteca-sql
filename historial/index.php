@@ -262,39 +262,25 @@ include __DIR__ . '/../includes/layout_header.php';
                 <?php if (empty($prestamos)): ?>
                     <tr><td colspan="8" class="cell-empty">No hay registros que coincidan con los filtros.</td></tr>
                 <?php else: ?>
-                    <?php foreach ($prestamos as $p):
-                        $devuelto = ((int)$p['id_estado_prestamo'] === 1);
-                        $obsAutor = $p['ultimo_obs_autor'] ?? '';
-                        $obsFecha = $p['ultimo_obs_fecha'] ?? '';
-                        $obsResumen = '';
-                        if ($obsAutor && $obsFecha) {
-                            $obsResumen = '<strong>' . htmlspecialchars($obsAutor) . '</strong> · ' . date('d/m/Y H:i', strtotime($obsFecha));
-                        }
-                    ?>
+                    <?php foreach ($registros as $row): ?>
                     <tr>
-                        <td><strong>#<?= (int)$p['id_prestamo'] ?></strong></td>
+                        <td><?= date('d/m/Y H:i:s', strtotime($row['fecha_hora'])) ?></td>
                         <td>
-                            <strong><?= htmlspecialchars($p['nombre_material']) ?></strong><br>
-                            <small class="text-muted"><?= htmlspecialchars($p['id_material']) ?> · <?= htmlspecialchars($p['categoria']) ?></small>
-                        </td>
-                        <td><?= htmlspecialchars($p['apellido_usuario'] . ', ' . $p['nombre_usuario']) ?></td>
-                        <td><?= date('d/m/Y H:i', strtotime($p['fecha_hora_registro'])) ?></td>
-                        <td>
-                            <?php if ($p['fecha_hora_devolucion']): ?>
-                                <?= date('d/m/Y H:i', strtotime($p['fecha_hora_devolucion'])) ?>
-                            <?php else: ?>
-                                <span class="sin-devolver">Sin devolver</span>
-                            <?php endif; ?>
-                        </td>
-                        <td>
-                            <span class="estado-<?= $devuelto ? 'devuelto' : 'prestado' ?>">
-                                <?= $devuelto ? 'Devuelto' : 'Prestado' ?>
+                            <span class="badge bg-<?= $row['badge_tipo'] ?? 'secondary' ?>">
+                                <?= htmlspecialchars($row['tipo_evento']) ?>
                             </span>
                         </td>
-                        <td>
-                            <?php if ($obsResumen): ?>
-                                <div class="ultima-obs"><?= $obsResumen ?></div>
-                                <small class="text-muted">(<?= (int)$p['cant_observaciones'] ?> en total)</small>
+                        <td><?= htmlspecialchars($row['descripcion']) ?></td>
+                        <td><?= htmlspecialchars($row['usuario_responsable'] ?? 'Sistema') ?></td>
+                        <td class="text-right">
+                            <?php if (!empty($row['referencia_id']) && $row['tipo_evento'] === 'Préstamo'): ?>
+                                <a href="detalle.php?id=<?= (int)$row['referencia_id'] ?>" class="btn-ver btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i> Ver Préstamo
+                                </a>
+                            <?php elseif (!empty($row['referencia_id']) && $row['tipo_evento'] === 'Observación'): ?>
+                                <a href="detalle.php?id=<?= (int)$row['referencia_id'] ?>" class="btn-ver btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i> Ver Préstamo Relacionado
+                                </a>
                             <?php else: ?>
                                 <span class="text-muted">—</span>
                             <?php endif; ?>
