@@ -4,6 +4,7 @@ require_once __DIR__ . '/../includes/auth.php';
 lb_requerir_login();
 require_once __DIR__ . '/../conexion.php';
 
+
 $pdo = db();
 
 // Obtener usuarios para el datalist del modal
@@ -210,11 +211,79 @@ include __DIR__ . '/../includes/layout_header.php';
                                         Ver
                                     </button>
                                     <?php if (!$p['fecha_hora_devolucion']): ?>
-                                        <form action="devolver_prestamo.php" method="POST" class="d-inline" onsubmit="return confirm('¿Confirma la devolución de este material?');">
-                                            <input type="hidden" name="id_prestamo" value="<?= htmlspecialchars($p['id_prestamo']) ?>">
-                                            <button type="submit" class="btn btn-sm btn-success">Devolver</button>
-                                        </form>
-                                    <?php endif; ?>
+                                        <!-- Botón para abrir el Modal de Devolución -->
+                                        <button type="button" class="btn btn-sm btn-primary shadow-sm btn-abrir-semaforo" data-idprestamo="<?= htmlspecialchars($p['id_prestamo']) ?>">
+                                            <i class="bi bi-arrow-return-left me-1"></i> Devolver
+                                        </button>
+                                        <!-- Modal Único de Semáforo con tu estructura JS -->
+                                        <div id="modalSemaforoGeneral" class="custom-modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1050;">
+                                            <div class="modal-dialog modal-dialog-centered w-100" style="max-width: 400px;">
+                                                <div class="modal-content bg-white shadow-lg border-0 rounded-4 overflow-hidden p-3">
+
+                                                    <!-- Cabecera limpia -->
+                                                    <div class="d-flex justify-content-between align-items-center pb-2 border-bottom">
+                                                        <h5 class="fw-bold text-dark fs-6 mb-0">
+                                                            <i class="bi bi-traffic-light text-primary me-2"></i>Semáforo de Conducta
+                                                        </h5>
+                                                        <button type="button" id="btnCerrarSemaforo" class="btn-close" aria-label="Cerrar"></button>
+                                                    </div>
+
+                                                    <form action="devolver_prestamo.php" method="POST">
+                                                        <div class="modal-body text-center py-4">
+                                                            <!-- Campo oculto para el ID del préstamo -->
+                                                            <input type="hidden" name="id_prestamo" id="input_id_prestamo" value="">
+
+                                                            <p class="text-muted small mb-4">Selecciona el estado en el que se devuelve el material:</p>
+
+                                                            <!-- ESTRUCTURA DEL SEMÁFORO (Fondo Negro Creativo) -->
+                                                            <div class="bg-dark p-3 rounded-4 shadow-inner mx-auto d-inline-block border border-secondary border-opacity-25">
+                                                                <div class="d-flex justify-content-center align-items-center gap-4">
+
+                                                                    <!-- Luz Roja -->
+                                                                    <div class="text-center">
+                                                                        <button type="submit" name="estado_devolucion" value="rojo" class="btn btn-danger rounded-circle p-0 d-flex align-items-center justify-content-center shadow-lg hover-scale mx-auto" style="width: 50px; height: 50px; border: 3px solid #ff6b6b;" onclick="return confirm('¿Confirmas que el material está roto, robado o desaparecido?');" title="Rojo">
+                                                                            <i class="bi bi-exclamation-triangle-fill fs-5 text-white"></i>
+                                                                        </button>
+                                                                        <div class="text-danger fw-bold mt-1" style="font-size: 0.7rem;">Rojo</div>
+                                                                        <div class="text-light opacity-75 mx-auto" style="font-size: 0.6rem; max-width: 75px;">Roto, robado, desaparecido</div>
+                                                                    </div>
+
+                                                                    <!-- Luz Amarilla -->
+                                                                    <div class="text-center">
+                                                                        <button type="submit" name="estado_devolucion" value="amarillo" class="btn btn-warning rounded-circle p-0 d-flex align-items-center justify-content-center shadow-lg hover-scale mx-auto" style="width: 50px; height: 50px; border: 3px solid #ffd93d;" onclick="return confirm('¿Confirmas la devolución con tardanza?');" title="Amarillo">
+                                                                            <i class="bi bi-clock-fill fs-5 text-dark"></i>
+                                                                        </button>
+                                                                        <div class="text-warning fw-bold mt-1" style="font-size: 0.7rem;">Amarillo</div>
+                                                                        <div class="text-light opacity-75 mx-auto" style="font-size: 0.6rem; max-width: 75px;">Tardanza en la entrega</div>
+                                                                    </div>
+
+                                                                    <!-- Luz Verde -->
+                                                                    <div class="text-center">
+                                                                        <button type="submit" name="estado_devolucion" value="verde" class="btn btn-success rounded-circle p-0 d-flex align-items-center justify-content-center shadow-lg hover-scale mx-auto" style="width: 50px; height: 50px; border: 3px solid #6bffb8;" onclick="return confirm('¿Confirmas la devolución en buenas condiciones, en tiempo y forma?');" title="Verde">
+                                                                            <i class="bi bi-check-lg fs-4 text-white fw-bold"></i>
+                                                                        </button>
+                                                                        <div class="text-success fw-bold mt-1" style="font-size: 0.7rem;">Verde</div>
+                                                                        <div class="text-light opacity-75 mx-auto" style="font-size: 0.6rem; max-width: 75px;">En buenas condiciones</div>
+                                                                    </div>
+
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="modal-footer border-0 pt-0 justify-content-center">
+                                                                <button type="button" id="btnCancelarSemaforo" class="btn btn-outline-secondary btn-sm px-4 rounded-pill">Cancelar</button>
+                                                            </div>
+
+                                                        </div>
+                                                </div>
+                                            </div>
+
+                                            <style>
+                                                .hover-scale:hover {
+                                                    transform: scale(1.1);
+                                                    transition: transform 0.2s ease-in-out;
+                                                }
+                                            </style>
+                                        <?php endif; ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -273,6 +342,37 @@ include __DIR__ . '/../includes/layout_header.php';
                     <option value="<?= $u['dni_usuario'] ?>"><?= $u['apellido'] . ', ' . $u['nombre'] ?></option>
                 <?php endforeach; ?>
             </datalist>
+
+            <!-- CONTENEDOR PARA EL PUNTAJE Y SEMÁFORO -->
+            <div id="info-usuario-prestamo" class="mt-2 p-2 rounded bg-light border" style="display: none; font-size: 0.85rem;">
+
+                <!-- NUEVO: Espacio para mostrar el nombre y apellido -->
+                <div class="mb-2 text-dark fw-bold border-bottom pb-1">
+                    <i class="bi bi-person-fill text-primary me-1"></i> <span id="lbl-nombre-usuario">Cargando...</span>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span>Puntaje actual: <strong id="lbl-puntos" class="fs-6">0</strong> pts</span>
+                    <span id="lbl-estado-badge" class="badge bg-secondary">Cargando...</span>
+                </div>
+
+                <!-- Contadores de semáforo -->
+                <div id="seccion-semaforos" class="d-flex justify-content-around text-center pt-1 border-top">
+                    <div class="text-success fw-bold"><i class="bi bi-circle-fill"></i> <span id="cnt-verde">0</span> verdes</div>
+                    <div class="text-warning text-yellow fw-bold"><i class="bi bi-circle-fill"></i> <span id="cnt-amarillo">0</span> amarillos</div>
+                    <div class="text-danger fw-bold"><i class="bi bi-circle-fill"></i> <span id="cnt-rojo">0</span> rojos</div>
+                </div>
+
+                <!-- Mensaje si no tiene préstamos -->
+                <div id="msg-sin-prestamos" class="text-muted text-center pt-1 border-top fst-italic" style="display: none; font-size: 0.75rem;">
+                    <i class="bi bi-info-circle me-1"></i> Este usuario todavía no realizó ningún préstamo.
+                </div>
+
+                <!-- Mensaje de bloqueo por puntaje bajo -->
+                <div id="msg-bloqueado" class="alert alert-danger py-1 px-2 mt-2 mb-0 small text-center fw-bold" style="display: none;">
+                    <i class="bi bi-ban me-1"></i> Usuario bloqueado: Puntaje crítico (-50 pts). No se permiten préstamos.
+                </div>
+            </div>
         </div>
 
         <div class="mb-4">
