@@ -6,8 +6,11 @@ require_once __DIR__ . '/../conexion.php';
 
 $pdo = db();
 
-// Obtener usuarios para el datalist del modal
+// Obtener usuarios para el datalist del modal (alumnos/usuarios generales)
 $usuarios = $pdo->query("SELECT dni_usuario, nombre, apellido FROM usuario WHERE id_rol IN (1, 2, 3, 4, 5) ORDER BY apellido")->fetchAll(PDO::FETCH_ASSOC);
+
+// Obtener profesores para el datalist del modal (Rol 3 = Profesor)
+$profesores = $pdo->query("SELECT dni_usuario, nombre, apellido FROM usuario WHERE id_rol = 3 ORDER BY apellido")->fetchAll(PDO::FETCH_ASSOC);
 
 // Obtener categorías únicas para el filtro desplegable
 $categorias = $pdo->query("SELECT DISTINCT nombre_categoria FROM vista_prestamos_detalle WHERE nombre_categoria IS NOT NULL ORDER BY nombre_categoria")->fetchAll(PDO::FETCH_ASSOC);
@@ -55,7 +58,6 @@ if ($hay_filtros_activos) {
         $params[] = "%{$buscar}%";
     }
 } else {
-    // REGLA POR DEFECTO: Mostrar los préstamos de los últimos 20 días
     $sql_condiciones .= " AND v.fecha_hora_registro >= DATE_SUB(NOW(), INTERVAL 20 DAY)";
 }
 
@@ -67,7 +69,6 @@ $pagina_actual = isset($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
 if ($pagina_actual < 1) $pagina_actual = 1;
 $offset = ($pagina_actual - 1) * $registros_por_pagina;
 
-// 1. Obtener el total de registros para calcular las páginas
 $stmt_total = $pdo->prepare("SELECT COUNT(v.id_prestamo) " . $sql_condiciones);
 $stmt_total->execute($params);
 $total_registros = $stmt_total->fetchColumn();
@@ -75,7 +76,6 @@ $total_paginas = ceil($total_registros / $registros_por_pagina);
 if ($total_paginas < 1) $total_paginas = 1;
 if ($pagina_actual > $total_paginas) $pagina_actual = $total_paginas;
 
-// 2. Consulta final con LIMIT y OFFSET
 $sql = "SELECT p.fecha_hora_limite_prestamo, v.* " . $sql_condiciones . " ORDER BY v.fecha_hora_registro DESC LIMIT $registros_por_pagina OFFSET $offset";
 
 $stmt = $pdo->prepare($sql);
@@ -90,7 +90,6 @@ include __DIR__ . '/../includes/layout_header.php';
         <h1 class="h3 text-dark mb-1">Gestión de Préstamos</h1>
         <p class="text-muted mb-0">Control de entrega y devolución de materiales en tiempo real.</p>
     </div>
-    <!-- Cambiamos para asegurarnos que abra por Bootstrap o mediante evento JS -->
     <button type="button" id="btnAgregar" class="btn btn-danger shadow-sm px-4 fw-medium" style="border-radius: 8px;" data-bs-toggle="modal" data-bs-target="#modalPrestamo">
         <i class="bi bi-plus-lg me-1"></i> Nuevo Préstamo
     </button>
@@ -98,20 +97,20 @@ include __DIR__ . '/../includes/layout_header.php';
 
 <!-- Alertas del sistema -->
 <?php if (isset($_GET['status'])): ?>
-    <div class="alert alert-<?= $_GET['status'] === 'success' ? 'success' : 'danger' ?> alert-dismissible fade show shadow-sm" role="alert">
+    <div id="alertaEstado" class="alert alert-<?= $_GET['status'] === 'success' ? 'success' : 'danger' ?> alert-dismissible fade show shadow-sm" role="alert">
         <?= $_GET['status'] === 'success' ? 'Préstamo registrado correctamente.' : htmlspecialchars($_GET['msg'] ?? 'Ocurrió un error.') ?>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <button type="button" class="btn-close" onclick="document.getElementById('alertaEstado').remove(); window.history.replaceState({}, document.title, window.location.pathname);" aria-label="Close"></button>
     </div>
 <?php endif; ?>
 
 <?php if (isset($_GET['status_devolucion'])): ?>
-    <div class="alert alert-<?= $_GET['status_devolucion'] === 'success_devuelto' ? 'success' : 'danger' ?> alert-dismissible fade show shadow-sm" role="alert">
+    <div id="alertaDevolucion" class="alert alert-<?= $_GET['status_devolucion'] === 'success_devuelto' ? 'success' : 'danger' ?> alert-dismissible fade show shadow-sm" role="alert">
         <?= $_GET['status_devolucion'] === 'success_devuelto' ? 'Préstamo devuelto correctamente.' : htmlspecialchars($_GET['msg'] ?? 'Ocurrió un error.') ?>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <button type="button" class="btn-close" onclick="document.getElementById('alertaDevolucion').remove(); window.history.replaceState({}, document.title, window.location.pathname);" aria-label="Close"></button>
     </div>
 <?php endif; ?>
 
-<!-- Barra de Búsqueda y Filtros unificada -->
+<!-- Barra de Búsqueda y Filtros -->
 <div class="card shadow-sm mb-4 p-3 bg-light border-0 card-custom">
     <form method="GET" action="" class="d-flex gap-1 flex-wrap align-items-center">
         <div class="input-group">
@@ -147,8 +146,7 @@ include __DIR__ . '/../includes/layout_header.php';
     </form>
 </div>
 
-
-<!-- Contenedor del Listado en Tabla -->
+<!-- Listado en Tabla -->
 <div class="card shadow-sm border-0">
     <div class="card-body p-0">
         <div class="table-responsive">
@@ -222,38 +220,6 @@ include __DIR__ . '/../includes/layout_header.php';
                 </tbody>
             </table>
         </div>
-
-        <!-- Paginación con Flechas Compacta y Centrada -->
-        <?php if (isset($total_paginas) && $total_paginas > 1): ?>
-            <?php
-            $params_url = $_GET;
-            unset($params_url['pagina']);
-            $query_string = http_build_query($params_url);
-            $query_string = $query_string ? '&' . $query_string : '';
-            ?>
-            <div class="d-flex justify-content-center py-3 bg-white border-top">
-                <nav aria-label="Paginación compacta de préstamos">
-                    <ul class="pagination pagination-sm m-0">
-                        <li class="page-item <?= ($pagina_actual <= 1) ? 'disabled' : '' ?>">
-                            <a class="page-link text-dark px-2 py-1" href="?pagina=<?= $pagina_actual - 1 ?><?= $query_string ?>" title="Anterior">
-                                <i class="bi bi-chevron-left"></i>
-                            </a>
-                        </li>
-                        <li class="page-item disabled">
-                            <span class="page-link bg-light text-dark px-2 py-1 border-0">
-                                <?= $pagina_actual ?>/<?= $total_paginas ?>
-                            </span>
-                        </li>
-                        <li class="page-item <?= ($pagina_actual >= $total_paginas) ? 'disabled' : '' ?>">
-                            <a class="page-link text-dark px-2 py-1" href="?pagina=<?= $pagina_actual + 1 ?><?= $query_string ?>" title="Siguiente">
-                                <i class="bi bi-chevron-right"></i>
-                            </a>
-                        </li>
-                    </ul>
-                </nav>
-            </div>
-        <?php endif; ?>
-
     </div>
 </div>
 
@@ -266,11 +232,32 @@ include __DIR__ . '/../includes/layout_header.php';
         <h4 class="mb-3 fw-bold">Registrar Préstamo</h4>
 
         <div class="mb-3">
-            <label for="dni_alumno" class="form-label small fw-bold text-muted">DNI del Usuario</label>
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <label for="dni_alumno" class="form-label small fw-bold text-muted m-0">DNI del Usuario</label>
+                <a href="/biblioteca-sql/usuario/" class="small text-danger text-decoration-none fw-semibold">
+                    <i class="bi bi-person-plus-fill me-1"></i>+ Agregar nuevo usuario
+                </a>
+            </div>
             <input type="text" name="dni_alumno" id="dni_alumno" class="form-control bg-light border-0" list="usuarios" placeholder="Buscar DNI..." required>
             <datalist id="usuarios">
                 <?php foreach ($usuarios as $u): ?>
                     <option value="<?= $u['dni_usuario'] ?>"><?= $u['apellido'] . ', ' . $u['nombre'] ?></option>
+                <?php endforeach; ?>
+            </datalist>
+        </div>
+
+        <!-- PUNTO 3: CAMPO PROFESOR A CARGO CON OPCIÓN DE AGREGAR -->
+        <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <label for="dni_profesor" class="form-label small fw-bold text-muted m-0">Profesor a Cargo (Opcional)</label>
+                <a href="/biblioteca-sql/usuario/" class="small text-danger text-decoration-none fw-semibold">
+                    <i class="bi bi-person-plus-fill me-1"></i>+ Agregar nuevo profesor
+                </a>
+            </div>
+            <input type="text" name="dni_profesor" id="dni_profesor" class="form-control bg-light border-0" list="profesores" placeholder="Buscar DNI o profesor...">
+            <datalist id="profesores">
+                <?php foreach ($profesores as $prof): ?>
+                    <option value="<?= $prof['dni_usuario'] ?>"><?= $prof['apellido'] . ', ' . $prof['nombre'] ?></option>
                 <?php endforeach; ?>
             </datalist>
         </div>
@@ -300,93 +287,10 @@ include __DIR__ . '/../includes/layout_header.php';
         <h4 class="mb-3 fw-bold text-danger">
             <i class="bi bi-info-circle me-2"></i>Detalles del Préstamo #<span id="ver_id_prestamo"></span>
         </h4>
-
-        <ul class="list-group list-group-flush mb-3">
-            <li class="list-group-item d-flex justify-content-between px-0">
-                <span class="fw-bold">Material ID:</span>
-                <span id="ver_id_material" class="text-secondary"></span>
-            </li>
-            <li class="list-group-item d-flex justify-content-between px-0">
-                <span class="fw-bold">Nombre del Material:</span>
-                <span id="ver_nombre_material" class="text-secondary text-end"></span>
-            </li>
-            <li class="list-group-item d-flex justify-content-between px-0">
-                <span class="fw-bold">Categoría:</span>
-                <span id="ver_categoria" class="text-secondary"></span>
-            </li>
-            <li class="list-group-item d-flex justify-content-between px-0">
-                <span class="fw-bold">Detalle / Atributo:</span>
-                <span id="ver_atributo_detalle" class="text-secondary"></span>
-            </li>
-            <li class="list-group-item d-flex justify-content-between px-0">
-                <span class="fw-bold">Estado del Material:</span>
-                <span id="ver_estado_material" class="text-secondary"></span>
-            </li>
-            <li class="list-group-item d-flex justify-content-between px-0">
-                <span class="fw-bold">Usuario (Solicitante):</span>
-                <span id="ver_usuario" class="text-secondary"></span>
-            </li>
-            <li class="list-group-item d-flex justify-content-between px-0">
-                <span class="fw-bold">DNI Usuario:</span>
-                <span id="ver_dni_usuario" class="text-secondary"></span>
-            </li>
-            <li class="list-group-item d-flex justify-content-between px-0">
-                <span class="fw-bold">Bibliotecario (DNI):</span>
-                <span id="ver_dni_bibliotecario" class="text-secondary"></span>
-            </li>
-            <li class="list-group-item d-flex justify-content-between px-0">
-                <span class="fw-bold">Fecha de Registro:</span>
-                <span id="ver_fecha_registro" class="text-secondary"></span>
-            </li>
-            <li class="list-group-item d-flex justify-content-between px-0">
-                <span class="fw-bold">Fecha y Hora Límite:</span>
-                <span id="ver_fecha_limite" class="text-danger fw-bold"></span>
-            </li>
-            <li class="list-group-item d-flex justify-content-between px-0">
-                <span class="fw-bold">Fecha de Devolución:</span>
-                <span id="ver_fecha_devolucion" class="text-secondary"></span>
-            </li>
-            <li class="list-group-item d-flex justify-content-between px-0 align-items-center">
-                <span class="fw-bold">Estado del Préstamo:</span>
-                <span id="ver_estado_prestamo" class="badge"></span>
-            </li>
-        </ul>
-
         <button type="button" class="btn btn-secondary w-100 fw-bold rounded-3" id="btnCerrarModalDetallesBtn">Cerrar</button>
     </div>
 </div>
-<!-- Script para inyectar datos en el modal de detalles si el JS externo usa los data-* attributes -->
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const modalDetalles = document.getElementById('modalVerDetallesPrestamo');
-        if (modalDetalles) {
-            modalDetalles.addEventListener('show.bs.modal', function(event) {
-                const button = event.relatedTarget;
-                if (!button) return;
-
-                document.getElementById('ver_id_prestamo').textContent = button.getAttribute('data-id');
-                document.getElementById('ver_id_material').textContent = button.getAttribute('data-materialid');
-                document.getElementById('ver_nombre_material').textContent = button.getAttribute('data-materialnombre');
-                document.getElementById('ver_categoria').textContent = button.getAttribute('data-categoria');
-                document.getElementById('ver_atributo_detalle').textContent = button.getAttribute('data-detalle');
-                document.getElementById('ver_estado_material').textContent = button.getAttribute('data-estadomaterial');
-                document.getElementById('ver_usuario').textContent = button.getAttribute('data-usuario');
-                document.getElementById('ver_dni_usuario').textContent = button.getAttribute('data-dniusuario');
-                document.getElementById('ver_dni_bibliotecario').textContent = button.getAttribute('data-dnibibliotecario');
-                document.getElementById('ver_fecha_registro').textContent = button.getAttribute('data-fecharegistro');
-                document.getElementById('ver_fecha_limite').textContent = button.getAttribute('data-fechalimite');
-                document.getElementById('ver_fecha_devolucion').textContent = button.getAttribute('data-fechadevolucion');
-
-                const estadoSpan = document.getElementById('ver_estado_prestamo');
-                const estadoVal = button.getAttribute('data-estado');
-                estadoSpan.textContent = estadoVal;
-                estadoSpan.className = 'badge ' + (estadoVal === 'Devuelto' ? 'bg-success' : 'bg-danger');
-            });
-        }
-    });
-</script>
 
 <script src="../assets/js/prestamos.js"></script>
 </body>
-
 </html>
