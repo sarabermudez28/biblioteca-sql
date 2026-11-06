@@ -9,7 +9,7 @@ lb_requerir_login();
 // Captura y saneamiento de Filtros
 // =================================
 $buscar       = trim($_GET['buscar'] ?? '');
-$id           = trim($_GET['id'] ?? ''); 
+$id           = trim($_GET['id'] ?? '');
 $categoria    = trim($_GET['categoria'] ?? '');
 $autor_libro  = trim($_GET['autor'] ?? '');
 $region_geo   = trim($_GET['region'] ?? '');
@@ -198,16 +198,16 @@ include __DIR__ . '/../includes/layout_header.php';
                 <button type="button" id="btnLimpiarSeleccion" class="btn btn-outline-danger btn-sm py-0 px-2" style="font-size: 0.75rem;" title="Borra toda la selección global">Limpiar todo</button>
             </div>
 
-            <!-- Paginación compacta -->
+            <!-- Paginación compacta con input interactivo directo -->
             <?php if (isset($total_paginas) && $total_paginas > 1): ?>
-                <?php 
+                <?php
                 $params_url = $_GET;
                 unset($params_url['pagina']);
                 $query_string = http_build_query($params_url);
                 $query_string = $query_string ? '&' . $query_string : '';
                 ?>
                 <nav aria-label="Paginación compacta">
-                    <ul class="pagination pagination-sm m-0">
+                    <ul class="pagination pagination-sm m-0 align-items-center">
                         <!-- Botón Anterior -->
                         <li class="page-item <?= ($pagina_actual <= 1) ? 'disabled' : '' ?>">
                             <a class="page-link text-dark px-2 py-1" href="generar_qr.php?pagina=<?= $pagina_actual - 1 ?><?= $query_string ?>" title="Anterior">
@@ -215,11 +215,10 @@ include __DIR__ . '/../includes/layout_header.php';
                             </a>
                         </li>
 
-                        <!-- Indicador compacto (Ej: 1/5) -->
-                        <li class="page-item disabled">
-                            <span class="page-link bg-light text-dark px-2 py-1 border-0">
-                                <?= $pagina_actual ?>/<?= $total_paginas ?>
-                            </span>
+                        <!-- Campo de entrada integrado (actúa al presionar Enter) -->
+                        <li class="page-item px-1 d-flex align-items-center bg-white border border-top-0 border-bottom-0">
+                            <input type="number" id="inputSaltoPagina" min="1" max="<?= $total_paginas ?>" value="<?= $pagina_actual ?>" class="form-control form-control-sm text-center border-0 p-0 shadow-none" style="width: 40px;" title="Escribe el número y presiona Enter">
+                            <span class="text-muted small px-1">/ <?= $total_paginas ?></span>
                         </li>
 
                         <!-- Botón Siguiente -->
@@ -231,6 +230,7 @@ include __DIR__ . '/../includes/layout_header.php';
                     </ul>
                 </nav>
             <?php endif; ?>
+
 
             <button type="submit" class="btn btn-danger btn-sm">
                 <i class="bi bi-qr-code"></i> Generar PDF con QRs seleccionados
@@ -388,6 +388,29 @@ include __DIR__ . '/../includes/layout_header.php';
             });
         }
 
+        // Manejador para el salto inmediato al presionar Enter
+        const inputSaltoPagina = document.getElementById("inputSaltoPagina");
+        if (inputSaltoPagina) {
+            inputSaltoPagina.addEventListener("keydown", function(e) {
+                if (e.key === "Enter") {
+                    e.preventDefault(); // Evita comportamientos por defecto del formulario
+
+                    let paginaDeseada = parseInt(this.value);
+                    let maxPaginas = parseInt(this.getAttribute("max"));
+
+                    if (isNaN(paginaDeseada) || paginaDeseada < 1) paginaDeseada = 1;
+                    if (paginaDeseada > maxPaginas) paginaDeseada = maxPaginas;
+
+                    // Conservamos todos los filtros GET actuales de la URL
+                    const urlParams = new URLSearchParams(window.location.search);
+                    urlParams.set("pagina", paginaDeseada);
+
+                    // Redirigimos de inmediato
+                    window.location.href = "generar_qr.php?" + urlParams.toString();
+                }
+            });
+        }
+
         // Al enviar el formulario, inyectar inputs ocultos con los IDs guardados de todas las páginas
         formQR.addEventListener("submit", function(e) {
             document.querySelectorAll(".input-oculto-material").forEach(el => el.remove());
@@ -409,4 +432,6 @@ include __DIR__ . '/../includes/layout_header.php';
             });
         });
     });
+
+
 </script>
