@@ -6,10 +6,30 @@ require_once __DIR__ . '/../conexion.php';
 lb_requerir_login();
 
 // =================================
+// Tamaño de QR recomendado por categoría (id_categoria => tamaño)
+// Si cambiás algo acá, cambialo también en crear_pdf_qr.php
+// =================================
+$tamanoRecomendadoPorCategoria = [
+    1 => '2x2',    // Libros
+    3 => '4x4',   // Materiales geográficos
+    4 => '2x2',    // Instrumentos de medición
+    5 => '4x4',   // Dibujo técnico (tableros)
+    6 => '4x4',   // Dibujo técnico
+    7 => '3x3',     // Materiales didácticos
+];
+$tamanoPorDefecto = '3x3';
+$nombresTamano = [
+    '2x2' => '2x2 cm',
+    '3x3' => '3x3 cm',
+    '4x4' => '4x4 cm',
+    '5x5' => '5x5 cm',
+];
+
+// =================================
 // Captura y saneamiento de Filtros
 // =================================
 $buscar       = trim($_GET['buscar'] ?? '');
-$id           = trim($_GET['id'] ?? ''); 
+$id           = trim($_GET['id'] ?? '');
 $categoria    = trim($_GET['categoria'] ?? '');
 $autor_libro  = trim($_GET['autor'] ?? '');
 $region_geo   = trim($_GET['region'] ?? '');
@@ -200,7 +220,7 @@ include __DIR__ . '/../includes/layout_header.php';
 
             <!-- Paginación compacta -->
             <?php if (isset($total_paginas) && $total_paginas > 1): ?>
-                <?php 
+                <?php
                 $params_url = $_GET;
                 unset($params_url['pagina']);
                 $query_string = http_build_query($params_url);
@@ -232,9 +252,23 @@ include __DIR__ . '/../includes/layout_header.php';
                 </nav>
             <?php endif; ?>
 
-            <button type="submit" class="btn btn-danger btn-sm">
-                <i class="bi bi-qr-code"></i> Generar PDF con QRs seleccionados
-            </button>
+            <!-- Selector de tamaño + botón generar -->
+            <div class="d-flex align-items-center gap-2">
+                <label for="selectTamano" class="text-muted small mb-0">
+                    <i class="bi bi-arrows-angle-expand"></i> Tamaño:
+                </label>
+                <select name="tamano" id="selectTamano" class="form-select form-select-sm" style="width: auto;" title="Automático usa el tamaño recomendado de cada material; los demás fuerzan el mismo tamaño para todas las etiquetas">
+                    <option value="auto" selected>Automático (recomendado)</option>
+                    <option value="2x2">2x2 cm (5 por fila)</option>
+                    <option value="3x3">3x3 cm (4 por fila)</option>
+                    <option value="4x4">4x4 cm (3 por fila)</option>
+                    <option value="5x5">5x5 cm (3 por fila)</option>
+                </select>
+
+                <button type="submit" class="btn btn-danger btn-sm">
+                    <i class="bi bi-qr-code"></i> Generar PDF con QRs seleccionados
+                </button>
+            </div>
         </div>
 
         <div class="table-responsive">
@@ -249,12 +283,13 @@ include __DIR__ . '/../includes/layout_header.php';
                         <th>Categoría</th>
                         <th>Detalle (Autor / Región / Descripción)</th>
                         <th>Atributo (Género / Escala / Medida)</th>
+                        <th>Tamaño QR sugerido</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($materiales)): ?>
                         <tr>
-                            <td colspan="6" class="text-center text-muted py-4">No se encontraron materiales registrados con los filtros seleccionados.</td>
+                            <td colspan="7" class="text-center text-muted py-4">No se encontraron materiales registrados con los filtros seleccionados.</td>
                         </tr>
                     <?php else: ?>
                         <?php foreach ($materiales as $m): ?>
@@ -270,6 +305,10 @@ include __DIR__ . '/../includes/layout_header.php';
                                 <td><span class="badge bg-secondary"><?= htmlspecialchars($m['nombre'] ?? '') ?></span></td>
                                 <td><?= htmlspecialchars($m['col2'] ?? '') ?></td>
                                 <td><?= htmlspecialchars($m['col3'] ?? '') ?></td>
+                                <?php
+                                $claveRec = $tamanoRecomendadoPorCategoria[(int)$m['id_categoria']] ?? $tamanoPorDefecto;
+                                ?>
+                                <td><span class="badge bg-light text-dark border"><?= htmlspecialchars($nombresTamano[$claveRec]) ?></span></td>
                             </tr>
                         <?php endforeach; ?>
                     <?php endif; ?>
@@ -288,8 +327,26 @@ include __DIR__ . '/../includes/layout_header.php';
         const formQR = document.getElementById("formQR");
         const btnLimpiar = document.getElementById("btnLimpiarSeleccion");
         const btnDeseleccionarPagina = document.getElementById("btnDeseleccionarPagina");
+        const selectTamano = document.getElementById("selectTamano");
 
         const STORAGE_KEY = "qr_seleccionados_inventario";
+        const STORAGE_KEY_TAMANO = "qr_tamano_etiqueta_v3";
+
+        // Recordar el último tamaño elegido
+        if (selectTamano) {
+            try {
+                const guardado = localStorage.getItem(STORAGE_KEY_TAMANO);
+                if (guardado && selectTamano.querySelector('option[value="' + guardado + '"]')) {
+                    selectTamano.value = guardado;
+                }
+            } catch (e) {}
+
+            selectTamano.addEventListener("change", function() {
+                try {
+                    localStorage.setItem(STORAGE_KEY_TAMANO, selectTamano.value);
+                } catch (e) {}
+            });
+        }
 
         function obtenerSeleccionados() {
             try {
