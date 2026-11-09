@@ -38,7 +38,7 @@
   </a>
 
   <!-- NOTIFICACIONES (con badge dinámico) -->
-  <a href="/biblioteka/biblioteca-sql/notificaciones.php" class="sidebar-nav-item <?= ($paginaActiva ?? '') === 'notificaciones' ? 'activo' : '' ?>">
+  <a href="../notificaciones.php" class="sidebar-nav-item <?= ($paginaActiva ?? '') === 'notificaciones' ? 'activo' : '' ?>">
     <span>Notificaciones</span>
     <i class="fa-solid fa-bell" style="margin-left: auto;"></i>
     <?php if (isset($totalNotificacionesPendientes) && $totalNotificacionesPendientes > 0): ?>
