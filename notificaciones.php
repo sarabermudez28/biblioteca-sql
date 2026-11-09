@@ -756,7 +756,7 @@ include __DIR__ . '/includes/layout_header.php';
                                 <?= ucfirst($n['estado']) ?>
                             </span>
                         <?php endif; ?>
-                        <a href="/biblioteka/biblioteca-sql/prestamos/" class="btn-secundario">
+                        <a href="/biblioteca-sql/prestamos/" class="btn-secundario">
                             <i class="bi bi-eye"></i> Ver préstamo
                         </a>
                     </div>
