@@ -2,10 +2,24 @@
 /**
  * Encabezado compartido por todas las páginas del panel.
  * Variables esperadas antes del include:
- *   $paginaActiva  -> 'panel' | 'prestamos' | 'inventario'
+ *   $paginaActiva  -> 'panel' | 'prestamos' | 'inventario' | 'notificaciones'
  *   $tituloPagina  -> título mostrado en <title> y en la pestaña del navegador
  */
 require_once __DIR__ . '/icons.php';
+
+// ==========================================
+// CONTAR NOTIFICACIONES PENDIENTES
+// ==========================================
+$totalNotificacionesPendientes = 0;
+try {
+    if (function_exists('db')) {
+        $db_temp = db();
+        $stmt = $db_temp->query("SELECT COUNT(*) FROM notificaciones_vencimiento WHERE estado = 'pendiente'");
+        $totalNotificacionesPendientes = (int) $stmt->fetchColumn();
+    }
+} catch (Exception $e) {
+    $totalNotificacionesPendientes = 0;
+}
 
 $usuario = lb_usuario_actual();
 $flash = lb_tomar_flash();
@@ -14,6 +28,7 @@ $NAV = [
   ['id' => 'panel', 'href' => 'panel.php', 'label' => 'Panel general', 'icon' => 'layout-dashboard'],
   ['id' => 'prestamos', 'href' => 'prestamos.php', 'label' => 'Préstamos', 'icon' => 'library-big'],
   ['id' => 'inventario', 'href' => 'inventario.php', 'label' => 'Inventario e incidencias', 'icon' => 'shield-alert'],
+  ['id' => 'notificaciones', 'href' => 'notificaciones.php', 'label' => 'Notificaciones', 'icon' => 'triangle-alert'],
 ];
 ?>
 <!DOCTYPE html>
@@ -22,7 +37,7 @@ $NAV = [
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Biblioteca - EPET34</title>
+  <title><?= htmlspecialchars($tituloPagina ?? 'Biblioteca - EPET34') ?></title>
   <link rel="icon" href="/biblioteca-sql/assets/img/logo-epet34.jpg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -65,18 +80,39 @@ $NAV = [
         top: 45px; /* Justo debajo del header superior */
         bottom: 0;
         left: 0;
-        width: 260px; /* Ancho estándar de la sidebar (ajusta si es necesario) */
+        width: 260px; /* Ancho estándar de la sidebar */
         overflow-y: auto;
         z-index: 1040;
-       
       }
 
-      /* 5. Empujamos el contenido principal a la derecha para que no quede debajo de la sidebar */
+      /* 5. Empujamos el contenido principal a la derecha */
       .shell-main {
         margin-left: 260px;
         width: calc(100% - 260px);
         flex-grow: 1;
       }
+    }
+
+    /* 6. Estilos para el badge de notificaciones */
+    .notif-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 20px;
+      height: 20px;
+      padding: 0 6px;
+      margin-left: auto;
+      border-radius: 999px;
+      background: var(--destructive);
+      color: var(--primary-foreground);
+      font-size: 0.7rem;
+      font-weight: 700;
+      line-height: 1;
+      animation: pulse-badge 2s infinite;
+    }
+    @keyframes pulse-badge {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.15); }
     }
   </style>
 </head>
@@ -158,10 +194,9 @@ $NAV = [
       <?php include __DIR__ . '/sidebar_content.php'; ?>
     </div>
 
-<div class="shell-main">
+    <div class="shell-main">
       <header class="mobile-topbar bg-dark text-white py-3 px-4 shadow-sm" style="background-color: #000 !important; min-height: 70px;">
         <div class="mobile-topbar-brand d-flex align-items-center gap-2">
-          <!-- Reemplazamos lb_icon por la etiqueta img de tu logo -->
           <img src="/assets/img/logo.png" alt="Logo EPET34" style="height: 40px; width: auto;" class="img-fluid">
           <span class="fs-5 fw-bold">Biblioteca Central</span>
         </div>
