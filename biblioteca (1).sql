@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.3
+-- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
--- Servidor: 127.0.0.1:3306
--- Tiempo de generación: 03-11-2026 a las 20:26:42
--- Versión del servidor: 8.4.7
--- Versión de PHP: 8.3.28
+-- Servidor: 127.0.0.1
+-- Tiempo de generación: 09-11-2026 a las 04:41:02
+-- Versión del servidor: 10.4.32-MariaDB
+-- Versión de PHP: 8.0.30
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -27,19 +27,16 @@ SET time_zone = "+00:00";
 -- Estructura de tabla para la tabla `categorias`
 --
 
-DROP TABLE IF EXISTS `categorias`;
-CREATE TABLE IF NOT EXISTS `categorias` (
-  `id_categoria` int UNSIGNED NOT NULL AUTO_INCREMENT,
-  `nombre` varchar(100) COLLATE utf8mb4_spanish_ci NOT NULL,
-  `descripcion` varchar(255) COLLATE utf8mb4_spanish_ci DEFAULT NULL,
-  `activo` tinyint(1) NOT NULL DEFAULT '1',
-  `prefijo` varchar(10) COLLATE utf8mb4_spanish_ci NOT NULL DEFAULT 'MAT',
-  `desde_num` int NOT NULL DEFAULT '1',
-  `hasta_num` int NOT NULL DEFAULT '9999',
-  `actual_num` int NOT NULL DEFAULT '0',
-  PRIMARY KEY (`id_categoria`),
-  UNIQUE KEY `uq_categorias_nombre` (`nombre`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_spanish_ci;
+CREATE TABLE `categorias` (
+  `id_categoria` int(10) UNSIGNED NOT NULL,
+  `nombre` varchar(100) NOT NULL,
+  `descripcion` varchar(255) DEFAULT NULL,
+  `activo` tinyint(1) NOT NULL DEFAULT 1,
+  `prefijo` varchar(10) NOT NULL DEFAULT 'MAT',
+  `desde_num` int(11) NOT NULL DEFAULT 1,
+  `hasta_num` int(11) NOT NULL DEFAULT 9999,
+  `actual_num` int(11) NOT NULL DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_spanish_ci;
 
 --
 -- Volcado de datos para la tabla `categorias`
@@ -60,12 +57,10 @@ INSERT INTO `categorias` (`id_categoria`, `nombre`, `descripcion`, `activo`, `pr
 -- Estructura de tabla para la tabla `estado_material`
 --
 
-DROP TABLE IF EXISTS `estado_material`;
-CREATE TABLE IF NOT EXISTS `estado_material` (
-  `id_estado_material` int NOT NULL AUTO_INCREMENT,
-  `desc_estado_material` varchar(255) COLLATE utf8mb4_spanish_ci NOT NULL,
-  PRIMARY KEY (`id_estado_material`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_spanish_ci;
+CREATE TABLE `estado_material` (
+  `id_estado_material` int(11) NOT NULL,
+  `desc_estado_material` varchar(255) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_spanish_ci;
 
 --
 -- Volcado de datos para la tabla `estado_material`
@@ -82,12 +77,10 @@ INSERT INTO `estado_material` (`id_estado_material`, `desc_estado_material`) VAL
 -- Estructura de tabla para la tabla `estado_prestamo`
 --
 
-DROP TABLE IF EXISTS `estado_prestamo`;
-CREATE TABLE IF NOT EXISTS `estado_prestamo` (
-  `id_estado_prestamo` int NOT NULL AUTO_INCREMENT,
-  `desc_estado_prestamo` varchar(200) COLLATE utf8mb4_spanish_ci NOT NULL,
-  PRIMARY KEY (`id_estado_prestamo`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_spanish_ci;
+CREATE TABLE `estado_prestamo` (
+  `id_estado_prestamo` int(11) NOT NULL,
+  `desc_estado_prestamo` varchar(200) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_spanish_ci;
 
 --
 -- Volcado de datos para la tabla `estado_prestamo`
@@ -103,12 +96,10 @@ INSERT INTO `estado_prestamo` (`id_estado_prestamo`, `desc_estado_prestamo`) VAL
 -- Estructura de tabla para la tabla `instrumentos_medicion`
 --
 
-DROP TABLE IF EXISTS `instrumentos_medicion`;
-CREATE TABLE IF NOT EXISTS `instrumentos_medicion` (
-  `id_material` varchar(200) COLLATE utf8mb4_spanish_ci NOT NULL,
-  `tipo` varchar(200) COLLATE utf8mb4_spanish_ci NOT NULL COMMENT 'regla de 90, regla de 45, compas, etc',
-  `longitud_cm` decimal(8,2) DEFAULT NULL,
-  PRIMARY KEY (`id_material`)
+CREATE TABLE `instrumentos_medicion` (
+  `id_material` varchar(200) NOT NULL,
+  `tipo` varchar(200) NOT NULL COMMENT 'regla de 90, regla de 45, compas, etc',
+  `longitud_cm` decimal(8,2) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_spanish_ci;
 
 --
@@ -216,17 +207,14 @@ INSERT INTO `instrumentos_medicion` (`id_material`, `tipo`, `longitud_cm`) VALUE
 -- Estructura de tabla para la tabla `inventario`
 --
 
-DROP TABLE IF EXISTS `inventario`;
-CREATE TABLE IF NOT EXISTS `inventario` (
-  `id_material` varchar(200) COLLATE utf8mb4_spanish_ci NOT NULL,
-  `id_viejo` int DEFAULT NULL,
+CREATE TABLE `inventario` (
+  `id_material` varchar(200) NOT NULL,
+  `id_viejo` int(11) DEFAULT NULL,
   `fecha_hora_ingreso` datetime NOT NULL,
-  `dni_registro` int NOT NULL COMMENT 'DNI del bibliotecario que ingresó el material',
-  `id_categoria` int NOT NULL,
-  `qr_material` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_spanish_ci DEFAULT NULL,
-  `id_estado_material` int NOT NULL,
-  PRIMARY KEY (`id_material`),
-  UNIQUE KEY `id_material` (`id_material`)
+  `dni_registro` int(11) NOT NULL COMMENT 'DNI del bibliotecario que ingresó el material',
+  `id_categoria` int(11) NOT NULL,
+  `qr_material` varchar(255) DEFAULT NULL,
+  `id_estado_material` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_spanish_ci COMMENT='Tabla maestro de los materiales que hay en la biblioteca';
 
 --
@@ -510,16 +498,12 @@ INSERT INTO `inventario` (`id_material`, `id_viejo`, `fecha_hora_ingreso`, `dni_
 -- Estructura de tabla para la tabla `libros`
 --
 
-DROP TABLE IF EXISTS `libros`;
-CREATE TABLE IF NOT EXISTS `libros` (
-  `id_material` varchar(200) COLLATE utf8mb4_spanish_ci NOT NULL,
-  `nombre` varchar(255) COLLATE utf8mb4_spanish_ci NOT NULL,
-  `autor` varchar(200) COLLATE utf8mb4_spanish_ci DEFAULT NULL,
-  `id_estado` int NOT NULL,
-  `genero` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_spanish_ci DEFAULT NULL,
-  PRIMARY KEY (`id_material`),
-  KEY `idx_publicaciones_autor` (`autor`),
-  KEY `id_estado` (`id_estado`)
+CREATE TABLE `libros` (
+  `id_material` varchar(200) NOT NULL,
+  `nombre` varchar(255) NOT NULL,
+  `autor` varchar(200) DEFAULT NULL,
+  `id_estado` int(11) NOT NULL,
+  `genero` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_spanish_ci;
 
 --
@@ -596,12 +580,10 @@ INSERT INTO `libros` (`id_material`, `nombre`, `autor`, `id_estado`, `genero`) V
 -- Estructura de tabla para la tabla `materiales_dibujo_tecnico`
 --
 
-DROP TABLE IF EXISTS `materiales_dibujo_tecnico`;
-CREATE TABLE IF NOT EXISTS `materiales_dibujo_tecnico` (
-  `id_material` varchar(200) COLLATE utf8mb4_spanish_ci NOT NULL,
-  `tipo` varchar(200) COLLATE utf8mb4_spanish_ci NOT NULL COMMENT 'tablero, soporte de tablero, cinta de papel',
-  `descripcion` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_spanish_ci DEFAULT NULL,
-  PRIMARY KEY (`id_material`)
+CREATE TABLE `materiales_dibujo_tecnico` (
+  `id_material` varchar(200) NOT NULL,
+  `tipo` varchar(200) NOT NULL COMMENT 'tablero, soporte de tablero, cinta de papel',
+  `descripcion` varchar(200) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_spanish_ci COMMENT='Tabla detalle de los materiales de Dibujo técnico';
 
 --
@@ -718,14 +700,11 @@ INSERT INTO `materiales_dibujo_tecnico` (`id_material`, `tipo`, `descripcion`) V
 -- Estructura de tabla para la tabla `materiales_didacticos`
 --
 
-DROP TABLE IF EXISTS `materiales_didacticos`;
-CREATE TABLE IF NOT EXISTS `materiales_didacticos` (
-  `id_material` varchar(200) COLLATE utf8mb4_spanish_ci NOT NULL,
-  `tipo` varchar(200) COLLATE utf8mb4_spanish_ci NOT NULL COMMENT 'juego de mesa, revista, rompecabezas, etc',
-  `tematica` varchar(150) COLLATE utf8mb4_spanish_ci DEFAULT NULL,
-  `piezas` int DEFAULT NULL COMMENT 'cantidad de piezas',
-  PRIMARY KEY (`id_material`),
-  KEY `idx_didacticos_tematica` (`tematica`)
+CREATE TABLE `materiales_didacticos` (
+  `id_material` varchar(200) NOT NULL,
+  `tipo` varchar(200) NOT NULL COMMENT 'juego de mesa, revista, rompecabezas, etc',
+  `tematica` varchar(150) DEFAULT NULL,
+  `piezas` int(11) DEFAULT NULL COMMENT 'cantidad de piezas'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_spanish_ci COMMENT='Tabla de detalle de materiales didacticos';
 
 -- --------------------------------------------------------
@@ -734,17 +713,12 @@ CREATE TABLE IF NOT EXISTS `materiales_didacticos` (
 -- Estructura de tabla para la tabla `materiales_geograficos`
 --
 
-DROP TABLE IF EXISTS `materiales_geograficos`;
-CREATE TABLE IF NOT EXISTS `materiales_geograficos` (
-  `id_material` varchar(200) COLLATE utf8mb4_spanish_ci NOT NULL,
-  `tipo` varchar(100) COLLATE utf8mb4_spanish_ci DEFAULT NULL COMMENT 'tipo material, mapa, globo terráqueo',
-  `region` varchar(150) COLLATE utf8mb4_spanish_ci DEFAULT NULL,
-  `escala` varchar(50) COLLATE utf8mb4_spanish_ci DEFAULT NULL,
-  `anio` year DEFAULT NULL,
-  PRIMARY KEY (`id_material`),
-  KEY `idx_geograficos_tipo` (`tipo`),
-  KEY `idx_geograficos_region` (`region`),
-  KEY `idx_geograficos_escala` (`escala`)
+CREATE TABLE `materiales_geograficos` (
+  `id_material` varchar(200) NOT NULL,
+  `tipo` varchar(100) DEFAULT NULL COMMENT 'tipo material, mapa, globo terráqueo',
+  `region` varchar(150) DEFAULT NULL,
+  `escala` varchar(50) DEFAULT NULL,
+  `anio` year(4) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_spanish_ci COMMENT='Tabla de detalle de materiales geográficos';
 
 --
@@ -770,25 +744,44 @@ INSERT INTO `materiales_geograficos` (`id_material`, `tipo`, `region`, `escala`,
 -- --------------------------------------------------------
 
 --
+-- Estructura de tabla para la tabla `notificaciones_vencimiento`
+--
+
+CREATE TABLE `notificaciones_vencimiento` (
+  `id_notificacion` int(11) NOT NULL,
+  `id_prestamo` int(11) NOT NULL COMMENT 'FK a prestamos.id_prestamo',
+  `dni_usuario` int(11) NOT NULL COMMENT 'DNI del alumno/profesor',
+  `id_material` varchar(200) NOT NULL,
+  `fecha_primera_notificacion` datetime NOT NULL DEFAULT current_timestamp(),
+  `fecha_ultima_revision` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `dias_retraso` int(11) NOT NULL DEFAULT 0,
+  `estado` enum('pendiente','revisada','resuelta') NOT NULL DEFAULT 'pendiente',
+  `fecha_resolucion` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_spanish_ci COMMENT='Notificaciones automáticas de préstamos vencidos';
+
+--
+-- Volcado de datos para la tabla `notificaciones_vencimiento`
+--
+
+INSERT INTO `notificaciones_vencimiento` (`id_notificacion`, `id_prestamo`, `dni_usuario`, `id_material`, `fecha_primera_notificacion`, `fecha_ultima_revision`, `dias_retraso`, `estado`, `fecha_resolucion`) VALUES
+(1, 38, 48322983, 'LIB0052', '2026-11-06 10:47:34', '2026-11-08 23:43:41', 8, 'revisada', NULL);
+
+-- --------------------------------------------------------
+
+--
 -- Estructura de tabla para la tabla `prestamos`
 --
 
-DROP TABLE IF EXISTS `prestamos`;
-CREATE TABLE IF NOT EXISTS `prestamos` (
-  `id_prestamo` int NOT NULL AUTO_INCREMENT,
-  `id_material` varchar(200) COLLATE utf8mb4_spanish_ci NOT NULL,
-  `dni_usuario` int NOT NULL COMMENT 'DNI del usuario que lleva prestado un material',
-  `dni_bibliotecario` int NOT NULL COMMENT 'DNI del bibliotecario que registró el prestamo',
+CREATE TABLE `prestamos` (
+  `id_prestamo` int(11) NOT NULL,
+  `id_material` varchar(200) NOT NULL,
+  `dni_usuario` int(11) NOT NULL COMMENT 'DNI del usuario que lleva prestado un material',
+  `dni_bibliotecario` int(11) NOT NULL COMMENT 'DNI del bibliotecario que registró el prestamo',
   `fecha_hora_registro` datetime NOT NULL,
   `fecha_hora_devolucion` datetime DEFAULT NULL,
   `fecha_hora_limite_prestamo` datetime NOT NULL,
-  `id_estado_prestamo` int NOT NULL COMMENT 'devuelto, retrasado, no devuelto, robado',
-  PRIMARY KEY (`id_prestamo`),
-  KEY `dni_bibliotecario` (`dni_bibliotecario`),
-  KEY `dni_usuario` (`dni_usuario`),
-  KEY `id_material` (`id_material`),
-  KEY `id_estado_prestamo` (`id_estado_prestamo`)
-) ENGINE=InnoDB AUTO_INCREMENT=39 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_spanish_ci COMMENT='Prestamos';
+  `id_estado_prestamo` int(11) NOT NULL COMMENT 'devuelto, retrasado, no devuelto, robado'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_spanish_ci COMMENT='Prestamos';
 
 --
 -- Volcado de datos para la tabla `prestamos`
@@ -840,12 +833,10 @@ INSERT INTO `prestamos` (`id_prestamo`, `id_material`, `dni_usuario`, `dni_bibli
 -- Estructura de tabla para la tabla `rol`
 --
 
-DROP TABLE IF EXISTS `rol`;
-CREATE TABLE IF NOT EXISTS `rol` (
-  `id_rol` int NOT NULL AUTO_INCREMENT,
-  `desc_rol` varchar(255) COLLATE utf8mb4_spanish_ci NOT NULL,
-  PRIMARY KEY (`id_rol`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_spanish_ci COMMENT='roles ';
+CREATE TABLE `rol` (
+  `id_rol` int(11) NOT NULL,
+  `desc_rol` varchar(255) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_spanish_ci COMMENT='roles ';
 
 --
 -- Volcado de datos para la tabla `rol`
@@ -864,16 +855,13 @@ INSERT INTO `rol` (`id_rol`, `desc_rol`) VALUES
 -- Estructura de tabla para la tabla `usuario`
 --
 
-DROP TABLE IF EXISTS `usuario`;
-CREATE TABLE IF NOT EXISTS `usuario` (
-  `dni_usuario` int NOT NULL,
-  `nombre` varchar(255) COLLATE utf8mb4_spanish_ci NOT NULL,
-  `apellido` varchar(255) COLLATE utf8mb4_spanish_ci NOT NULL,
-  `gmail` varchar(255) COLLATE utf8mb4_spanish_ci NOT NULL,
-  `contra` varchar(255) COLLATE utf8mb4_spanish_ci NOT NULL,
-  `id_rol` int NOT NULL,
-  PRIMARY KEY (`dni_usuario`),
-  KEY `id_rol` (`id_rol`)
+CREATE TABLE `usuario` (
+  `dni_usuario` int(11) NOT NULL,
+  `nombre` varchar(255) NOT NULL,
+  `apellido` varchar(255) NOT NULL,
+  `gmail` varchar(255) NOT NULL,
+  `contra` varchar(255) NOT NULL,
+  `id_rol` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_spanish_ci COMMENT='Tabla usuarios (simulación)';
 
 --
@@ -889,44 +877,24 @@ INSERT INTO `usuario` (`dni_usuario`, `nombre`, `apellido`, `gmail`, `contra`, `
 -- --------------------------------------------------------
 
 --
--- Estructura Stand-in para la vista `vista_inventario_completo`
--- (Véase abajo para la vista actual)
---
-DROP VIEW IF EXISTS `vista_inventario_completo`;
-CREATE TABLE IF NOT EXISTS `vista_inventario_completo` (
-);
-
--- --------------------------------------------------------
-
---
 -- Estructura Stand-in para la vista `vista_prestamos_detalle`
 -- (Véase abajo para la vista actual)
 --
-DROP VIEW IF EXISTS `vista_prestamos_detalle`;
-CREATE TABLE IF NOT EXISTS `vista_prestamos_detalle` (
-`apellido_usuario` varchar(255)
-,`atributo_detalle` varchar(200)
-,`desc_estado_material` varchar(255)
-,`dni_bibliotecario` int
-,`dni_usuario` int
-,`fecha_hora_devolucion` datetime
-,`fecha_hora_registro` datetime
+CREATE TABLE `vista_prestamos_detalle` (
+`id_prestamo` int(11)
 ,`id_material` varchar(200)
-,`id_prestamo` int
+,`fecha_hora_registro` datetime
+,`fecha_hora_devolucion` datetime
+,`fecha_hora_limite_prestamo` datetime
+,`dni_usuario` int(11)
+,`dni_bibliotecario` int(11)
 ,`nombre_categoria` varchar(100)
+,`desc_estado_material` varchar(255)
 ,`nombre_material` varchar(255)
+,`atributo_detalle` varchar(200)
 ,`nombre_usuario` varchar(255)
+,`apellido_usuario` varchar(255)
 );
-
--- --------------------------------------------------------
-
---
--- Estructura para la vista `vista_inventario_completo`
---
-DROP TABLE IF EXISTS `vista_inventario_completo`;
-
-DROP VIEW IF EXISTS `vista_inventario_completo`;
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vista_inventario_completo`  AS SELECT `i`.`id_material` AS `id_material`, `c`.`nombre` AS `categoria`, coalesce(`l`.`nombre`,`md`.`tipo`,`mg`.`tipo`,`im`.`tipo`,`mdt`.`tipo`) AS `nombre_o_tipo`, coalesce(`l`.`autor`,`md`.`tematica`,`mg`.`region`,`im`.`material_fabricacion`,`mdt`.`marca`) AS `detalle_secundario`, `em`.`desc_estado_material` AS `estado_material`, `i`.`fecha_hora_ingreso` AS `fecha_hora_ingreso`, `l`.`autor` AS `libro_autor`, `l`.`genero` AS `libro_genero`, `md`.`tematica` AS `didactico_tematica`, `mg`.`region` AS `geografico_region`, `im`.`material_fabricacion` AS `medicion_material`, `mdt`.`marca` AS `dibujo_marca` FROM (((((((`inventario` `i` join `categorias` `c` on((`i`.`id_categoria` = `c`.`id_categoria`))) join `estado_material` `em` on((`i`.`id_estado_material` = `em`.`id_estado_material`))) left join `libros` `l` on((`i`.`id_material` = `l`.`id_material`))) left join `materiales_didacticos` `md` on((`i`.`id_material` = `md`.`id_material`))) left join `materiales_geograficos` `mg` on((`i`.`id_material` = `mg`.`id_material`))) left join `instrumentos_medicion` `im` on((`i`.`id_material` = `im`.`id_material`))) left join `materiales_dibujo_tecnico` `mdt` on((`i`.`id_material` = `mdt`.`id_material`))) ;
 
 -- --------------------------------------------------------
 
@@ -935,8 +903,155 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW 
 --
 DROP TABLE IF EXISTS `vista_prestamos_detalle`;
 
-DROP VIEW IF EXISTS `vista_prestamos_detalle`;
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vista_prestamos_detalle`  AS SELECT `p`.`id_prestamo` AS `id_prestamo`, `p`.`id_material` AS `id_material`, `p`.`fecha_hora_registro` AS `fecha_hora_registro`, `p`.`fecha_hora_devolucion` AS `fecha_hora_devolucion`, `p`.`dni_usuario` AS `dni_usuario`, `p`.`dni_bibliotecario` AS `dni_bibliotecario`, `c`.`nombre` AS `nombre_categoria`, `em`.`desc_estado_material` AS `desc_estado_material`, coalesce(`l`.`nombre`,`im`.`tipo`,`md`.`tipo`,`mg`.`tipo`,`mdt`.`tipo`,'Material sin nombre') AS `nombre_material`, coalesce(`l`.`autor`,cast(`im`.`longitud_cm` as char charset utf8mb4),`md`.`tematica`,`mg`.`region`,`mdt`.`descripcion`,'-') AS `atributo_detalle`, `u`.`nombre` AS `nombre_usuario`, `u`.`apellido` AS `apellido_usuario` FROM (((((((((`prestamos` `p` join `inventario` `i` on((`i`.`id_material` = `p`.`id_material`))) join `categorias` `c` on((`c`.`id_categoria` = `i`.`id_categoria`))) join `estado_material` `em` on((`em`.`id_estado_material` = `i`.`id_estado_material`))) left join `libros` `l` on((`i`.`id_material` = `l`.`id_material`))) left join `instrumentos_medicion` `im` on((`i`.`id_material` = `im`.`id_material`))) left join `materiales_didacticos` `md` on((`i`.`id_material` = `md`.`id_material`))) left join `materiales_geograficos` `mg` on((`i`.`id_material` = `mg`.`id_material`))) left join `materiales_dibujo_tecnico` `mdt` on((`i`.`id_material` = `mdt`.`id_material`))) left join `usuario` `u` on((`u`.`dni_usuario` = `p`.`dni_usuario`))) ;
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vista_prestamos_detalle`  AS SELECT `p`.`id_prestamo` AS `id_prestamo`, `p`.`id_material` AS `id_material`, `p`.`fecha_hora_registro` AS `fecha_hora_registro`, `p`.`fecha_hora_devolucion` AS `fecha_hora_devolucion`, `p`.`fecha_hora_limite_prestamo` AS `fecha_hora_limite_prestamo`, `p`.`dni_usuario` AS `dni_usuario`, `p`.`dni_bibliotecario` AS `dni_bibliotecario`, `c`.`nombre` AS `nombre_categoria`, `em`.`desc_estado_material` AS `desc_estado_material`, coalesce(`l`.`nombre`,`im`.`tipo`,`md`.`tipo`,`mg`.`tipo`,`mdt`.`tipo`,'Material sin nombre') AS `nombre_material`, coalesce(`l`.`autor`,cast(`im`.`longitud_cm` as char charset utf8mb4),`md`.`tematica`,`mg`.`region`,`mdt`.`descripcion`,'-') AS `atributo_detalle`, `u`.`nombre` AS `nombre_usuario`, `u`.`apellido` AS `apellido_usuario` FROM (((((((((`prestamos` `p` join `inventario` `i` on(`i`.`id_material` = `p`.`id_material`)) join `categorias` `c` on(`c`.`id_categoria` = `i`.`id_categoria`)) join `estado_material` `em` on(`em`.`id_estado_material` = `i`.`id_estado_material`)) left join `libros` `l` on(`i`.`id_material` = `l`.`id_material`)) left join `instrumentos_medicion` `im` on(`i`.`id_material` = `im`.`id_material`)) left join `materiales_didacticos` `md` on(`i`.`id_material` = `md`.`id_material`)) left join `materiales_geograficos` `mg` on(`i`.`id_material` = `mg`.`id_material`)) left join `materiales_dibujo_tecnico` `mdt` on(`i`.`id_material` = `mdt`.`id_material`)) left join `usuario` `u` on(`u`.`dni_usuario` = `p`.`dni_usuario`)) ;
+
+--
+-- Índices para tablas volcadas
+--
+
+--
+-- Indices de la tabla `categorias`
+--
+ALTER TABLE `categorias`
+  ADD PRIMARY KEY (`id_categoria`),
+  ADD UNIQUE KEY `uq_categorias_nombre` (`nombre`);
+
+--
+-- Indices de la tabla `estado_material`
+--
+ALTER TABLE `estado_material`
+  ADD PRIMARY KEY (`id_estado_material`);
+
+--
+-- Indices de la tabla `estado_prestamo`
+--
+ALTER TABLE `estado_prestamo`
+  ADD PRIMARY KEY (`id_estado_prestamo`);
+
+--
+-- Indices de la tabla `instrumentos_medicion`
+--
+ALTER TABLE `instrumentos_medicion`
+  ADD PRIMARY KEY (`id_material`);
+
+--
+-- Indices de la tabla `inventario`
+--
+ALTER TABLE `inventario`
+  ADD PRIMARY KEY (`id_material`),
+  ADD UNIQUE KEY `id_material` (`id_material`);
+
+--
+-- Indices de la tabla `libros`
+--
+ALTER TABLE `libros`
+  ADD PRIMARY KEY (`id_material`),
+  ADD KEY `idx_publicaciones_autor` (`autor`),
+  ADD KEY `id_estado` (`id_estado`);
+
+--
+-- Indices de la tabla `materiales_dibujo_tecnico`
+--
+ALTER TABLE `materiales_dibujo_tecnico`
+  ADD PRIMARY KEY (`id_material`);
+
+--
+-- Indices de la tabla `materiales_didacticos`
+--
+ALTER TABLE `materiales_didacticos`
+  ADD PRIMARY KEY (`id_material`),
+  ADD KEY `idx_didacticos_tematica` (`tematica`);
+
+--
+-- Indices de la tabla `materiales_geograficos`
+--
+ALTER TABLE `materiales_geograficos`
+  ADD PRIMARY KEY (`id_material`),
+  ADD KEY `idx_geograficos_tipo` (`tipo`),
+  ADD KEY `idx_geograficos_region` (`region`),
+  ADD KEY `idx_geograficos_escala` (`escala`);
+
+--
+-- Indices de la tabla `notificaciones_vencimiento`
+--
+ALTER TABLE `notificaciones_vencimiento`
+  ADD PRIMARY KEY (`id_notificacion`),
+  ADD UNIQUE KEY `uq_notif_prestamo` (`id_prestamo`),
+  ADD KEY `idx_estado` (`estado`),
+  ADD KEY `idx_dni_usuario` (`dni_usuario`);
+
+--
+-- Indices de la tabla `prestamos`
+--
+ALTER TABLE `prestamos`
+  ADD PRIMARY KEY (`id_prestamo`),
+  ADD KEY `dni_bibliotecario` (`dni_bibliotecario`),
+  ADD KEY `dni_usuario` (`dni_usuario`),
+  ADD KEY `id_material` (`id_material`),
+  ADD KEY `id_estado_prestamo` (`id_estado_prestamo`);
+
+--
+-- Indices de la tabla `rol`
+--
+ALTER TABLE `rol`
+  ADD PRIMARY KEY (`id_rol`);
+
+--
+-- Indices de la tabla `usuario`
+--
+ALTER TABLE `usuario`
+  ADD PRIMARY KEY (`dni_usuario`),
+  ADD KEY `id_rol` (`id_rol`);
+
+--
+-- AUTO_INCREMENT de las tablas volcadas
+--
+
+--
+-- AUTO_INCREMENT de la tabla `categorias`
+--
+ALTER TABLE `categorias`
+  MODIFY `id_categoria` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+
+--
+-- AUTO_INCREMENT de la tabla `estado_material`
+--
+ALTER TABLE `estado_material`
+  MODIFY `id_estado_material` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- AUTO_INCREMENT de la tabla `estado_prestamo`
+--
+ALTER TABLE `estado_prestamo`
+  MODIFY `id_estado_prestamo` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT de la tabla `notificaciones_vencimiento`
+--
+ALTER TABLE `notificaciones_vencimiento`
+  MODIFY `id_notificacion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT de la tabla `prestamos`
+--
+ALTER TABLE `prestamos`
+  MODIFY `id_prestamo` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
+
+--
+-- AUTO_INCREMENT de la tabla `rol`
+--
+ALTER TABLE `rol`
+  MODIFY `id_rol` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
+-- Restricciones para tablas volcadas
+--
+
+--
+-- Filtros para la tabla `notificaciones_vencimiento`
+--
+ALTER TABLE `notificaciones_vencimiento`
+  ADD CONSTRAINT `fk_notif_prestamo` FOREIGN KEY (`id_prestamo`) REFERENCES `prestamos` (`id_prestamo`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
