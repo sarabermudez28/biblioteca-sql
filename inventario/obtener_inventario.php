@@ -99,72 +99,83 @@ $categorias_config = [
     ]
 ];
 
-// Categoría activa por URL
-$cat_key = $_GET['cat'] ?? 'libros';
-if (!isset($categorias_config[$cat_key])) {
-    $cat_key = 'libros';
+// Categoría activa por URL (sin forzar 'libros')
+$cat_key = $_GET['cat'] ?? '';
+
+// Verificamos si la categoría solicitada existe en la configuración
+if (!array_key_exists($cat_key, $categorias_config)) {
+    $cat_key = '';
 }
-$config = $categorias_config[$cat_key];
 
-// Construcción dinámica de la consulta SQL base
-$sql_base = "FROM inventario i
-             {$config['joins']}
-             INNER JOIN estado_material em ON i.id_estado_material = em.id_estado_material
-             WHERE 1=1";
+// Si hay una categoría seleccionada cargamos su configuración, de lo contrario dejamos null
+$config = ($cat_key !== '') ? $categorias_config[$cat_key] : null;
 
-$params = [];
+$resultados = [];
+$total_paginas = 1;
+$pagina_actual = 1;
 
-// Buscador masivo global (texto)
-$busqueda = trim($_GET['q'] ?? '');
-if (!empty($busqueda)) {
-    $busqueda_sql = [];
-    foreach ($config['search_fields'] as $field) {
-        $busqueda_sql[] = "$field LIKE ?";
-        $params[] = "%$busqueda%";
+// Solo ejecutamos consultas si el usuario ha seleccionado una categoría
+if ($config !== null) {
+    // Construcción dinámica de la consulta SQL base
+    $sql_base = "FROM inventario i
+                 {$config['joins']}
+                 INNER JOIN estado_material em ON i.id_estado_material = em.id_estado_material
+                 WHERE 1=1";
+
+    $params = [];
+
+    // Buscador masivo global (texto)
+    $busqueda = trim($_GET['q'] ?? '');
+    if (!empty($busqueda)) {
+        $busqueda_sql = [];
+        foreach ($config['search_fields'] as $field) {
+            $busqueda_sql[] = "$field LIKE ?";
+            $params[] = "%$busqueda%";
+        }
+        $sql_base .= " AND (" . implode(" OR ", $busqueda_sql) . ")";
     }
-    $sql_base .= " AND (" . implode(" OR ", $busqueda_sql) . ")";
-}
 
-// Filtro por categoría general
-$id_categoria_filtro = trim($_GET['id_categoria_filtro'] ?? '');
-if (!empty($id_categoria_filtro)) {
-    $sql_base .= " AND i.id_categoria = ?";
-    $params[] = $id_categoria_filtro;
-}
+    // Filtro por categoría general
+    $id_categoria_filtro = trim($_GET['id_categoria_filtro'] ?? '');
+    if (!empty($id_categoria_filtro)) {
+        $sql_base .= " AND i.id_categoria = ?";
+        $params[] = $id_categoria_filtro;
+    }
 
-// Filtros específicos (dinámicos según tipo text, select o select_estado)
-foreach ($config['filtros'] as $filtro) {
-    $valor = trim($_GET[$filtro['name']] ?? '');
-    if (!empty($valor)) {
-        $sql_base .= " AND " . $filtro['sql'];
-        if (isset($filtro['type']) && ($filtro['type'] === 'select' || $filtro['type'] === 'select_estado')) {
-            $params[] = $valor;
-        } else {
-            $params[] = "%$valor%";
+    // Filtros específicos (dinámicos según tipo text, select o select_estado)
+    foreach ($config['filtros'] as $filtro) {
+        $valor = trim($_GET[$filtro['name']] ?? '');
+        if (!empty($valor)) {
+            $sql_base .= " AND " . $filtro['sql'];
+            if (isset($filtro['type']) && ($filtro['type'] === 'select' || $filtro['type'] === 'select_estado')) {
+                $params[] = $valor;
+            } else {
+                $params[] = "%$valor%";
+            }
         }
     }
-}
 
-// --- CONFIGURACIÓN DE PAGINACIÓN ---
-$registros_por_pagina = 10;
-$pagina_actual = isset($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
-if ($pagina_actual < 1) $pagina_actual = 1;
-$offset = ($pagina_actual - 1) * $registros_por_pagina;
+    // --- CONFIGURACIÓN DE PAGINACIÓN ---
+    $registros_por_pagina = 10;
+    $pagina_actual = isset($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
+    if ($pagina_actual < 1) $pagina_actual = 1;
+    $offset = ($pagina_actual - 1) * $registros_por_pagina;
 
-// 1. Obtener el total de registros con los filtros actuales
-$stmt_total = db()->prepare("SELECT COUNT(i.id_material) " . $sql_base);
-$stmt_total->execute($params);
-$total_registros = $stmt_total->fetchColumn();
-$total_paginas = ceil($total_registros / $registros_por_pagina);
-if ($total_paginas < 1) $total_paginas = 1;
-if ($pagina_actual > $total_paginas) $pagina_actual = $total_paginas;
+    // 1. Obtener el total de registros con los filtros actuales
+    $stmt_total = db()->prepare("SELECT COUNT(i.id_material) " . $sql_base);
+    $stmt_total->execute($params);
+    $total_registros = $stmt_total->fetchColumn();
+    $total_paginas = ceil($total_registros / $registros_por_pagina);
+    if ($total_paginas < 1) $total_paginas = 1;
+    if ($pagina_actual > $total_paginas) $pagina_actual = $total_paginas;
 
-// 2. Consulta final para obtener los registros limitados por página
+    // 2. Consulta final para obtener los registros limitados por página (Ordenados de menor a mayor ID)
 $sql_final = "SELECT i.id_material, {$config['campos_select'][0]}, {$config['campos_select'][1]}, {$config['campos_select'][2]}, em.desc_estado_material AS estado " 
              . $sql_base 
-             . " LIMIT $registros_por_pagina OFFSET $offset";
+             . " ORDER BY i.id_material ASC LIMIT $registros_por_pagina OFFSET $offset";
 
 $stmt = db()->prepare($sql_final);
 $stmt->execute($params);
 $resultados = $stmt->fetchAll();
-?>
+
+}
