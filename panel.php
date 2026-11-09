@@ -203,7 +203,7 @@ include __DIR__ . '/includes/layout_header.php';
       </div>
 
       <!-- TARJETA DE NOTIFICACIONES (Clicable y destacada) -->
-      <a href="/biblioteka/biblioteca-sql/notificaciones.php" class="stat-card danger text-decoration-none d-block" style="transition: all 0.2s ease;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 0.5rem 1rem rgba(220, 53, 69, 0.15)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 0.125rem 0.25rem rgba(0, 0, 0, 0.075)'">
+      <a href="/biblioteca-sql/notificaciones.php" class="stat-card danger text-decoration-none d-block" style="transition: all 0.2s ease;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 0.5rem 1rem rgba(220, 53, 69, 0.15)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 0.125rem 0.25rem rgba(0, 0, 0, 0.075)'">
         <div class="d-flex justify-content-between align-items-start mb-2">
           <span class="text-muted small fw-semibold">Notificaciones Pendientes</span>
           <i class="bi bi-bell-fill text-danger" style="font-size: 1.25rem;"></i>
