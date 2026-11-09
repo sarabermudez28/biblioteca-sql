@@ -1,19 +1,10 @@
 <?php
-
 // ================================
 // Verifica que el usuario inició sesión
 // ================================
 require_once __DIR__ . '/conexion.php';
 require_once __DIR__ . '/includes/auth.php';
 lb_requerir_login();
-
-
-
-
-
-
-
-
 
 // ================================
 // LÓGICA DE ESTADÍSTICAS Y CONSULTAS SQL
@@ -31,7 +22,18 @@ try {
     $stmt = $database->query("SELECT COUNT(*) FROM inventario WHERE id_estado_material = 2");
     $totalRotos = $stmt->fetchColumn();
 
-    $totalRobados = 0; 
+    // 1.1 Notificaciones Pendientes (Integración del módulo)
+    $totalNotificacionesPendientes = 0;
+    if (function_exists('lb_contar_notificaciones_pendientes')) {
+        $totalNotificacionesPendientes = lb_contar_notificaciones_pendientes($database);
+    } else {
+        try {
+            $stmt = $database->query("SELECT COUNT(*) FROM notificaciones_vencimiento WHERE estado = 'pendiente'");
+            $totalNotificacionesPendientes = $stmt->fetchColumn();
+        } catch (Exception $e) {
+            $totalNotificacionesPendientes = 0;
+        }
+    }
 
     // 2. Distribución del Inventario
     $stmt = $database->query("
@@ -76,7 +78,7 @@ try {
     $totalPrestamosActivos = 0;
     $prestadosHoy = 0;
     $totalRotos = 0;
-    $totalRobados = 0;
+    $totalNotificacionesPendientes = 0; // Respaldo en caso de error
     $distribucionInventario = [];
     $totalInventario = 1;
     $actividadReciente = [];
@@ -92,7 +94,6 @@ include __DIR__ . '/includes/layout_header.php';
 
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -119,7 +120,6 @@ include __DIR__ . '/includes/layout_header.php';
       font-weight: 700;
       margin-top: 0.25rem;
     }
-
     .chart-container-custom {
       display: flex;
       align-items: flex-end;
@@ -165,7 +165,6 @@ include __DIR__ . '/includes/layout_header.php';
     }
   </style>
 </head>
-
 <body>
 
   <div class="view">
@@ -203,10 +202,15 @@ include __DIR__ . '/includes/layout_header.php';
         <div class="stat-number"><?= $totalRotos ?></div>
       </div>
 
-      <div class="stat-card danger">
-        <span class="text-muted small fw-semibold">Robados / Perdidos</span>
-        <div class="stat-number"><?= $totalRobados ?></div>
-      </div>
+      <!-- TARJETA DE NOTIFICACIONES (Clicable y destacada) -->
+      <a href="/biblioteka/biblioteca-sql/notificaciones.php" class="stat-card danger text-decoration-none d-block" style="transition: all 0.2s ease;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 0.5rem 1rem rgba(220, 53, 69, 0.15)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 0.125rem 0.25rem rgba(0, 0, 0, 0.075)'">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <span class="text-muted small fw-semibold">Notificaciones Pendientes</span>
+          <i class="bi bi-bell-fill text-danger" style="font-size: 1.25rem;"></i>
+        </div>
+        <div class="stat-number text-danger"><?= $totalNotificacionesPendientes ?></div>
+        <small class="text-muted mt-2 d-block"><i class="bi bi-arrow-right-circle me-1"></i>Ver préstamos vencidos</small>
+      </a>
     </div>
 
     <!-- Gráfico anual -->
@@ -275,7 +279,7 @@ include __DIR__ . '/includes/layout_header.php';
         </div>
 
         <div>
-          <a href="/biblioteca-sql/inventario/" class="btn btn-light btn-sm w-100 text-dark border fw-medium">
+          <a href="/biblioteka/biblioteca-sql/inventario/" class="btn btn-light btn-sm w-100 text-dark border fw-medium">
             <i class="bi bi-eye me-1"></i> Ver detalles de inventario
           </a>
         </div>
@@ -292,7 +296,7 @@ include __DIR__ . '/includes/layout_header.php';
                 <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
                   <div>
                     <i class="bi bi-journal-arrow-up text-primary me-2"></i>
-                    <span>Préstamo de <strong><?= htmlspecialchars($mov['nombre_material'] ?? 'Material') ?></strong> a <strong><?= htmlspecialchars($mov['apellido_usuario'] . ', ' . $mov['nombre_usuario']) ?></strong></span>
+                    <span>Préstamo de <strong><?= htmlspecialchars($mov['nombre_material'] ?? 'Material') ?></strong> a <strong><?= htmlspecialchars(($mov['apellido_usuario'] ?? '') . ', ' . ($mov['nombre_usuario'] ?? '')) ?></strong></span>
                   </div>
                   <small class="text-muted"><?= date('d/m H:i', strtotime($mov['fecha_hora_registro'])) ?></small>
                 </li>
@@ -304,7 +308,7 @@ include __DIR__ . '/includes/layout_header.php';
         </div>
 
         <div>
-          <a href="/biblioteca-sql/prestamos/" class="btn btn-light btn-sm w-100 text-dark border fw-medium">
+          <a href="/biblioteka/biblioteca-sql/prestamos/" class="btn btn-light btn-sm w-100 text-dark border fw-medium">
             <i class="bi bi-list-ul me-1"></i> Ver listado completo de préstamos
           </a>
         </div>
@@ -319,5 +323,4 @@ include __DIR__ . '/includes/layout_header.php';
   ?>
 
 </body>
-
 </html>
