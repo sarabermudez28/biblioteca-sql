@@ -1,5 +1,14 @@
+
 <?php
-require_once 'seguridad.php';
+require_once __DIR__ . '/../conexion.php';
+require_once __DIR__ . '/../includes/auth.php';
+
+$pdo = db();
+
+lb_requerir_login();
+
+$tituloPagina = 'Registrar nuevo socio';
+$paginaActiva = 'usuarios';
 
 $error = '';
 
@@ -26,6 +35,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $pdo->beginTransaction();
 
+            // Verificar que el DNI y el correo no estén registrados.
+            $verificar = $pdo->prepare(
+                "SELECT COUNT(*) FROM usuario
+                 WHERE dni_usuario = ? OR gmail = ?"
+            );
+            $verificar->execute([$dni, $gmail]);
+
+            if ($verificar->fetchColumn() > 0) {
+                throw new Exception('El DNI o el correo ya están registrados.');
+            }
+
+            // Registrar el nuevo socio.
             $stmt = $pdo->prepare("
                 INSERT INTO usuario
                 (dni_usuario, nombre, apellido, gmail, contra, id_rol, puntos, activo)
@@ -41,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $rol
             ]);
 
-            // Registrar el puntaje inicial en el historial.
+            // Registrar los 100 puntos iniciales en el historial.
             $stmt = $pdo->prepare("
                 INSERT INTO historial_puntos
                 (dni_usuario, id_prestamo, puntos_cambio, motivo, fecha_hora)
@@ -55,20 +76,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header('Location: index.php?mensaje=' . urlencode('Socio registrado correctamente.'));
             exit;
 
-        } catch (PDOException $e) {
+        } catch (Exception $e) {
 
             if ($pdo->inTransaction()) {
                 $pdo->rollBack();
             }
 
-            $error = 'No se pudo registrar. Verificá que el DNI y el correo no estén registrados.';
+            $error = $e instanceof PDOException
+                ? 'No se pudo registrar el socio. Verificá los datos ingresados.'
+                : $e->getMessage();
         }
     }
 }
 ?>
 
-<?php require_once __DIR__ . '/../includes/header.php'; ?>
-<?php require_once __DIR__ . '/../includes/navbar.php'; ?>
+<?php require_once __DIR__ . '/../includes/layout_header.php'; ?>
 
 <div class="container-fluid py-4">
 
@@ -90,35 +112,85 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     <div class="col-md-6 mb-3">
                         <label class="form-label">DNI</label>
-                        <input type="number" name="dni" class="form-control" required>
+                        <input
+                            type="number"
+                            name="dni"
+                            class="form-control"
+                            required
+                            value="<?= htmlspecialchars($_POST['dni'] ?? '') ?>"
+                        >
                     </div>
 
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Nombre</label>
-                        <input type="text" name="nombre" class="form-control" required>
+                        <input
+                            type="text"
+                            name="nombre"
+                            class="form-control"
+                            required
+                            value="<?= htmlspecialchars($_POST['nombre'] ?? '') ?>"
+                        >
                     </div>
 
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Apellido</label>
-                        <input type="text" name="apellido" class="form-control" required>
+                        <input
+                            type="text"
+                            name="apellido"
+                            class="form-control"
+                            required
+                            value="<?= htmlspecialchars($_POST['apellido'] ?? '') ?>"
+                        >
                     </div>
 
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Correo electrónico</label>
-                        <input type="email" name="gmail" class="form-control" required>
+                        <input
+                            type="email"
+                            name="gmail"
+                            class="form-control"
+                            required
+                            value="<?= htmlspecialchars($_POST['gmail'] ?? '') ?>"
+                        >
                     </div>
 
+                    <!-- Contraseña con botón para mostrar u ocultar -->
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Contraseña</label>
-                        <input type="password" name="contra" class="form-control" required>
+
+                        <div class="input-group">
+                            <input
+                                type="password"
+                                name="contra"
+                                id="contra"
+                                class="form-control"
+                                required
+                            >
+
+                            <button
+                                class="btn btn-outline-secondary"
+                                type="button"
+                                onclick="mostrarContrasena()"
+                                aria-label="Mostrar contraseña"
+                            >
+                                <i class="fa-solid fa-eye" id="iconoContra"></i>
+                            </button>
+                        </div>
                     </div>
 
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Tipo de socio</label>
+
                         <select name="rol" class="form-select" required>
                             <option value="">Seleccionar...</option>
-                            <option value="4">Alumno</option>
-                            <option value="3">Profesor</option>
+
+                            <option value="4" <?= (($_POST['rol'] ?? '') == '4') ? 'selected' : '' ?>>
+                                Alumno
+                            </option>
+
+                            <option value="3" <?= (($_POST['rol'] ?? '') == '3') ? 'selected' : '' ?>>
+                                Profesor
+                            </option>
                         </select>
                     </div>
 
@@ -133,12 +205,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <i class="fa-solid fa-save"></i> Registrar socio
                 </button>
 
-                <a href="index.php" class="btn btn-secondary">Cancelar</a>
+                <a href="index.php" class="btn btn-secondary">
+                    Cancelar
+                </a>
 
             </form>
 
         </div>
     </div>
+
 </div>
 
-<?php require_once __DIR__ . '/../includes/footer.php'; ?>
+<script>
+function mostrarContrasena() {
+
+    const campo = document.getElementById('contra');
+    const icono = document.getElementById('iconoContra');
+
+    if (campo.type === 'password') {
+
+        campo.type = 'text';
+
+        icono.classList.remove('fa-eye');
+        icono.classList.add('fa-eye-slash');
+
+    } else {
+
+        campo.type = 'password';
+
+        icono.classList.remove('fa-eye-slash');
+        icono.classList.add('fa-eye');
+    }
+}
+</script>
+
+<?php require_once __DIR__ . '/../includes/layout_footer.php'; ?>

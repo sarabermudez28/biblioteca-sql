@@ -1,6 +1,3 @@
-<!-- INDEX.PHP -->
-<!-- Inicio del sistema y login -->
-
 <?php
 session_start();
 require_once __DIR__ . '/conexion.php';

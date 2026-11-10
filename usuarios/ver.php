@@ -1,8 +1,28 @@
-<?php
-require_once 'seguridad.php';
 
+<?php
+
+// Conexión y autenticación
+require_once __DIR__ . '/../conexion.php';
+require_once __DIR__ . '/../includes/auth.php';
+
+// Obtener conexión
+$pdo = db();
+
+// Verificar que haya iniciado sesión
+lb_requerir_login();
+
+$tituloPagina = 'Información del socio';
+$paginaActiva = 'usuarios';
+
+// Obtener DNI
 $dni = $_GET['dni'] ?? '';
 
+if ($dni === '') {
+    header('Location: index.php');
+    exit;
+}
+
+// Buscar socio
 $stmt = $pdo->prepare("
     SELECT u.*, r.desc_rol
     FROM usuario u
@@ -12,14 +32,30 @@ $stmt = $pdo->prepare("
 ");
 
 $stmt->execute([$dni]);
-$socio = $stmt->fetch();
+$socio = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$socio) {
     header('Location: index.php?mensaje=' . urlencode('Socio no encontrado.'));
     exit;
 }
 
-// Historial de préstamos.
+// Identificar al usuario que inició sesión
+$usuarioActual = lb_usuario_actual();
+
+// Consultar si el usuario actual es administrador
+$stmt = $pdo->prepare("
+    SELECT id_rol
+    FROM usuario
+    WHERE gmail = ?
+");
+
+$stmt->execute([$usuarioActual]);
+$usuarioSesion = $stmt->fetch(PDO::FETCH_ASSOC);
+
+// Verificar si es administrador (rol 1)
+$es_admin = $usuarioSesion && (int)$usuarioSesion['id_rol'] === 1;
+
+// Historial de préstamos
 $stmt = $pdo->prepare("
     SELECT
         p.id_prestamo,
@@ -36,9 +72,9 @@ $stmt = $pdo->prepare("
 ");
 
 $stmt->execute([$dni]);
-$prestamos = $stmt->fetchAll();
+$prestamos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Historial de puntos.
+// Historial de puntos
 $stmt = $pdo->prepare("
     SELECT puntos_cambio, motivo, fecha_hora, id_prestamo
     FROM historial_puntos
@@ -47,26 +83,33 @@ $stmt = $pdo->prepare("
 ");
 
 $stmt->execute([$dni]);
-$historial_puntos = $stmt->fetchAll();
+$historial_puntos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
 ?>
 
-<?php require_once __DIR__ . '/../includes/header.php'; ?>
-<?php require_once __DIR__ . '/../includes/navbar.php'; ?>
+<?php require_once __DIR__ . '/../includes/layout_header.php'; ?>
 
 <div class="container-fluid py-4">
 
+    <!-- Encabezado -->
     <div class="d-flex justify-content-between align-items-center mb-4">
+
         <div>
             <h2>Información del socio</h2>
-            <p class="text-muted">Datos personales y actividad en la biblioteca.</p>
+            <p class="text-muted">
+                Datos personales y actividad en la biblioteca.
+            </p>
         </div>
 
         <a href="index.php" class="btn btn-secondary">
             Volver
         </a>
+
     </div>
 
+    <!-- Datos personales -->
     <div class="card shadow-sm mb-4">
+
         <div class="card-body">
 
             <div class="row">
@@ -93,6 +136,7 @@ $historial_puntos = $stmt->fetchAll();
 
                 <div class="col-md-6 mb-3">
                     <strong>Estado:</strong><br>
+
                     <?= $socio['activo']
                         ? '<span class="badge bg-success">Activo</span>'
                         : '<span class="badge bg-secondary">Inactivo</span>' ?>
@@ -100,6 +144,7 @@ $historial_puntos = $stmt->fetchAll();
 
                 <div class="col-md-6 mb-3">
                     <strong>Puntaje actual:</strong><br>
+
                     <span class="badge bg-primary fs-6">
                         <?= (int)$socio['puntos'] ?> puntos
                     </span>
@@ -108,21 +153,30 @@ $historial_puntos = $stmt->fetchAll();
             </div>
 
             <?php if ($es_admin && $socio['activo']): ?>
+
                 <a href="puntos.php?dni=<?= urlencode($dni) ?>"
                    class="btn btn-warning">
-                    <i class="fa-solid fa-star"></i> Descontar puntos
+
+                    <i class="fa-solid fa-star"></i>
+                    Descontar puntos
+
                 </a>
+
             <?php endif; ?>
 
         </div>
+
     </div>
 
+    <!-- Historial de préstamos -->
     <h4 class="mb-3">Historial de préstamos</h4>
 
     <div class="card shadow-sm mb-4">
+
         <div class="card-body table-responsive">
 
             <table class="table table-hover">
+
                 <thead>
                     <tr>
                         <th>N.º préstamo</th>
@@ -135,40 +189,70 @@ $historial_puntos = $stmt->fetchAll();
                 </thead>
 
                 <tbody>
+
                     <?php if ($prestamos): ?>
+
                         <?php foreach ($prestamos as $p): ?>
+
                             <tr>
-                                <td><?= (int)$p['id_prestamo'] ?></td>
-                                <td><?= htmlspecialchars($p['id_material']) ?></td>
-                                <td><?= htmlspecialchars($p['fecha_hora_registro']) ?></td>
-                                <td><?= htmlspecialchars($p['fecha_hora_limite_prestamo']) ?></td>
+
+                                <td>
+                                    <?= (int)$p['id_prestamo'] ?>
+                                </td>
+
+                                <td>
+                                    <?= htmlspecialchars($p['id_material']) ?>
+                                </td>
+
+                                <td>
+                                    <?= htmlspecialchars($p['fecha_hora_registro']) ?>
+                                </td>
+
+                                <td>
+                                    <?= htmlspecialchars($p['fecha_hora_limite_prestamo']) ?>
+                                </td>
+
                                 <td>
                                     <?= $p['fecha_hora_devolucion']
                                         ? htmlspecialchars($p['fecha_hora_devolucion'])
                                         : 'Pendiente' ?>
                                 </td>
-                                <td><?= htmlspecialchars($p['desc_estado_prestamo'] ?? 'Sin estado') ?></td>
+
+                                <td>
+                                    <?= htmlspecialchars($p['desc_estado_prestamo'] ?? 'Sin estado') ?>
+                                </td>
+
                             </tr>
+
                         <?php endforeach; ?>
+
                     <?php else: ?>
+
                         <tr>
                             <td colspan="6" class="text-center text-muted">
                                 Este socio todavía no tiene préstamos registrados.
                             </td>
                         </tr>
+
                     <?php endif; ?>
+
                 </tbody>
+
             </table>
 
         </div>
+
     </div>
 
+    <!-- Historial de puntos -->
     <h4 class="mb-3">Historial de puntos</h4>
 
     <div class="card shadow-sm">
+
         <div class="card-body table-responsive">
 
             <table class="table table-hover">
+
                 <thead>
                     <tr>
                         <th>Fecha</th>
@@ -179,45 +263,67 @@ $historial_puntos = $stmt->fetchAll();
                 </thead>
 
                 <tbody>
+
                     <?php if ($historial_puntos): ?>
+
                         <?php foreach ($historial_puntos as $h): ?>
+
                             <tr>
-                                <td><?= htmlspecialchars($h['fecha_hora']) ?></td>
 
                                 <td>
+                                    <?= htmlspecialchars($h['fecha_hora']) ?>
+                                </td>
+
+                                <td>
+
                                     <?php if ($h['puntos_cambio'] > 0): ?>
+
                                         <span class="text-success">
                                             +<?= (int)$h['puntos_cambio'] ?>
                                         </span>
+
                                     <?php else: ?>
+
                                         <span class="text-danger">
                                             <?= (int)$h['puntos_cambio'] ?>
                                         </span>
+
                                     <?php endif; ?>
+
                                 </td>
 
-                                <td><?= htmlspecialchars($h['motivo']) ?></td>
+                                <td>
+                                    <?= htmlspecialchars($h['motivo']) ?>
+                                </td>
 
                                 <td>
                                     <?= $h['id_prestamo'] !== null
                                         ? (int)$h['id_prestamo']
                                         : 'No corresponde' ?>
                                 </td>
+
                             </tr>
+
                         <?php endforeach; ?>
+
                     <?php else: ?>
+
                         <tr>
                             <td colspan="4" class="text-center text-muted">
                                 No hay movimientos de puntos registrados.
                             </td>
                         </tr>
+
                     <?php endif; ?>
+
                 </tbody>
+
             </table>
 
         </div>
+
     </div>
 
 </div>
 
-<?php require_once __DIR__ . '/../includes/footer.php'; ?>
+<?php require_once __DIR__ . '/../includes/layout_footer.php'; ?>

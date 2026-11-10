@@ -1,14 +1,50 @@
-<?php
-require_once 'seguridad.php';
 
-// Solamente el administrador puede modificar puntos.
+<?php
+
+// Conexión y autenticación
+require_once __DIR__ . '/../conexion.php';
+require_once __DIR__ . '/../includes/auth.php';
+
+// Obtener conexión
+$pdo = db();
+
+// Verificar que haya iniciado sesión
+lb_requerir_login();
+
+$tituloPagina = 'Descontar puntos';
+$paginaActiva = 'usuarios';
+
+// Identificar al usuario conectado
+$usuarioActual = lb_usuario_actual();
+
+// Consultar su rol
+$stmt = $pdo->prepare("
+    SELECT id_rol
+    FROM usuario
+    WHERE gmail = ?
+");
+
+$stmt->execute([$usuarioActual]);
+$usuarioSesion = $stmt->fetch(PDO::FETCH_ASSOC);
+
+// Verificar si es administrador (rol 1)
+$es_admin = $usuarioSesion && (int)$usuarioSesion['id_rol'] === 1;
+
+// Solamente el administrador puede modificar puntos
 if (!$es_admin) {
     header('Location: index.php?mensaje=' . urlencode('No tenés permiso para realizar esta acción.'));
     exit;
 }
 
+// Obtener DNI
 $dni = $_GET['dni'] ?? '';
 
+if ($dni === '') {
+    header('Location: index.php');
+    exit;
+}
+
+// Buscar socio
 $stmt = $pdo->prepare("
     SELECT *
     FROM usuario
@@ -18,7 +54,7 @@ $stmt = $pdo->prepare("
 ");
 
 $stmt->execute([$dni]);
-$socio = $stmt->fetch();
+$socio = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$socio) {
     header('Location: index.php');
@@ -33,20 +69,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $motivo = trim($_POST['motivo'] ?? '');
 
     if ($descuento === false || $descuento === null || $descuento <= 0) {
+
         $error = 'Ingresá una cantidad válida de puntos.';
+
     } elseif ($descuento > $socio['puntos']) {
+
         $error = 'El descuento no puede superar los puntos actuales del socio.';
+
     } elseif ($motivo === '') {
+
         $error = 'Tenés que indicar el motivo del descuento.';
+
     } else {
 
         try {
+
             $pdo->beginTransaction();
 
+            // Descontar puntos
             $stmt = $pdo->prepare("
                 UPDATE usuario
                 SET puntos = puntos - ?
                 WHERE dni_usuario = ?
+                AND id_rol IN (3, 4)
                 AND activo = 1
                 AND puntos >= ?
             ");
@@ -57,6 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new Exception('No se pudo actualizar el puntaje.');
             }
 
+            // Registrar movimiento en el historial
             $stmt = $pdo->prepare("
                 INSERT INTO historial_puntos
                 (dni_usuario, id_prestamo, puntos_cambio, motivo, fecha_hora)
@@ -69,6 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $motivo
             ]);
 
+            // Confirmar cambios
             $pdo->commit();
 
             header('Location: ver.php?dni=' . urlencode($dni));
@@ -84,17 +131,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
+
 ?>
 
-<?php require_once __DIR__ . '/../includes/header.php'; ?>
-<?php require_once __DIR__ . '/../includes/navbar.php'; ?>
+<?php require_once __DIR__ . '/../includes/layout_header.php'; ?>
 
 <div class="container-fluid py-4">
 
     <h2>Descontar puntos</h2>
-    <p class="text-muted">Registrar una penalización al socio.</p>
+
+    <p class="text-muted">
+        Registrar una penalización al socio.
+    </p>
 
     <div class="card shadow-sm">
+
         <div class="card-body">
 
             <h5>
@@ -107,19 +158,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <p>
                 Puntaje actual:
-                <strong><?= (int)$socio['puntos'] ?> puntos</strong>
+                <strong>
+                    <?= (int)$socio['puntos'] ?> puntos
+                </strong>
             </p>
 
             <?php if ($error): ?>
+
                 <div class="alert alert-danger">
                     <?= htmlspecialchars($error) ?>
                 </div>
+
             <?php endif; ?>
 
             <form method="POST">
 
                 <div class="mb-3">
-                    <label class="form-label">Cantidad de puntos a descontar</label>
+
+                    <label class="form-label">
+                        Cantidad de puntos a descontar
+                    </label>
+
                     <input
                         type="number"
                         name="descuento"
@@ -128,10 +187,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         max="<?= (int)$socio['puntos'] ?>"
                         required
                     >
+
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label">Motivo del descuento</label>
+
+                    <label class="form-label">
+                        Motivo del descuento
+                    </label>
+
                     <textarea
                         name="motivo"
                         class="form-control"
@@ -140,22 +204,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         placeholder="Ejemplo: Devolución de un libro con páginas dañadas."
                         required
                     ></textarea>
+
                 </div>
 
                 <button type="submit" class="btn btn-warning">
                     Confirmar descuento
                 </button>
 
-                <a href="ver.php?dni=<?= urlencode($dni) ?>"
-                   class="btn btn-secondary">
+                <a
+                    href="ver.php?dni=<?= urlencode($dni) ?>"
+                    class="btn btn-secondary"
+                >
                     Cancelar
                 </a>
 
             </form>
 
         </div>
+
     </div>
 
 </div>
 
-<?php require_once __DIR__ . '/../includes/footer.php'; ?>
+<?php require_once __DIR__ . '/../includes/layout_footer.php'; ?>
