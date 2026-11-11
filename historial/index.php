@@ -9,10 +9,10 @@ lb_requerir_login();
 // ================================
 // Filtros recibidos por GET
 // ================================
-$filtroTexto   = trim($_GET['q']         ?? '');
-$filtroTipo    = trim($_GET['tipo']      ?? ''); // prestamo, baja, perdido, modificacion, observacion
-$filtroDesde   = trim($_GET['desde']     ?? '');
-$filtroHasta   = trim($_GET['hasta']     ?? '');
+$filtroTexto   = trim($_GET['q']     ?? '');
+$filtroTipo    = trim($_GET['tipo']    ?? ''); // prestamo, baja, perdido, modificacion, observacion
+$filtroDesde   = trim($_GET['desde']    ?? '');
+$filtroHasta   = trim($_GET['hasta']    ?? '');
 $pagina        = max(1, (int)($_GET['pagina'] ?? 1));
 $porPagina     = 20;
 $offset        = ($pagina - 1) * $porPagina;
@@ -37,14 +37,14 @@ try {
                         CONCAT('Préstamo de material: ', COALESCE(l.nombre, im.tipo, md.tipo, mg.tipo, mdt.tipo, 'Material'), ' (ID: ', p.id_material, ')') AS descripcion,
                         CONCAT(u.apellido, ', ', u.nombre) AS usuario_responsable,
                         p.id_prestamo
-                     FROM prestamos p
-                     LEFT JOIN usuario u ON u.dni_usuario = p.dni_usuario
-                     LEFT JOIN inventario i ON i.id_material = p.id_material
-                     LEFT JOIN libros l ON l.id_material = i.id_material
-                     LEFT JOIN instrumentos_medicion im ON im.id_material = i.id_material
-                     LEFT JOIN materiales_didacticos md ON md.id_material = i.id_material
-                     LEFT JOIN materiales_geograficos mg ON mg.id_material = i.id_material
-                     LEFT JOIN materiales_dibujo_tecnico mdt ON mdt.id_material = i.id_material";
+                       FROM prestamos p
+                       LEFT JOIN usuario u ON u.dni_usuario = p.dni_usuario
+                       LEFT JOIN inventario i ON i.id_material = p.id_material
+                       LEFT JOIN libros l ON l.id_material = i.id_material
+                       LEFT JOIN instrumentos_medicion im ON im.id_material = i.id_material
+                       LEFT JOIN materiales_didacticos md ON md.id_material = i.id_material
+                       LEFT JOIN materiales_geograficos mg ON mg.id_material = i.id_material
+                       LEFT JOIN materiales_dibujo_tecnico mdt ON mdt.id_material = i.id_material";
 
     // 2. Observaciones
     $sqlObservaciones = "SELECT 
@@ -56,25 +56,8 @@ try {
                             CONCAT('Observación en Préstamo #', ho.id_prestamo, ': ', ho.observacion) AS descripcion,
                             CONCAT(u.apellido, ', ', u.nombre) AS usuario_responsable,
                             ho.id_prestamo
-                         FROM historial_observaciones ho
-                         LEFT JOIN usuario u ON u.dni_usuario = ho.dni_usuario";
-
-    // Nota: Si en tu base de datos posees tablas específicas para "bajas", "perdidos" o "modificaciones" 
-    // (ej. historial_cambios, auditoria, etc.), puedes agregarlas aquí abajo con otro UNION ALL.
-    // Ejemplo genérico si existiera tabla de bajas:
-    /*
-    $sqlBajas = "SELECT 
-                    CONCAT('baja_', b.id_baja) AS id_unico,
-                    'Baja de material' AS tipo_evento,
-                    'danger' AS badge_tipo,
-                    b.fecha_baja AS fecha_hora,
-                    b.id_material AS referencia_id,
-                    CONCAT('Material dado de baja. Motivo: ', b.motivo) AS descripcion,
-                    CONCAT(u.apellido, ', ', u.nombre) AS usuario_responsable,
-                    NULL AS id_prestamo
-                 FROM bajas b
-                 LEFT JOIN usuario u ON u.dni_usuario = b.dni_usuario";
-    */
+                           FROM historial_observaciones ho
+                           LEFT JOIN usuario u ON u.dni_usuario = ho.dni_usuario";
 
     // Unimos los eventos principales disponibles
     $sqlUnificado = "SELECT * FROM ($sqlPrestamos UNION ALL $sqlObservaciones) AS historial_global WHERE 1=1";
@@ -239,28 +222,6 @@ include __DIR__ . '/../includes/layout_header.php';
                 <tbody>
                 <?php if (empty($registros)): ?>
                     <tr><td colspan="5" class="cell-empty text-center py-4">No hay registros que coincidan con los filtros.</td></tr>
-                <?php else: ?>
-                    <?php foreach ($registros as $row): ?>
-                    <tr>
-                        <td><?= date('d/m/Y H:i:s', strtotime($row['fecha_hora'])) ?></td>
-                        <td>
-                            <span class="badge bg-<?= $row['badge_tipo'] ?? 'secondary' ?>">
-                                <?= htmlspecialchars($row['tipo_evento']) ?>
-                            </span>
-                        </td>
-                        <td><?= htmlspecialchars($row['descripcion']) ?></td>
-                        <td><?= htmlspecialchars($row['usuario_responsable'] ?? 'Sistema') ?></td>
-                        <td class="text-right">
-                            <?php if (!empty($row['referencia_id']) && $row['tipo_evento'] === 'Préstamo'): ?>
-                                <a href="detalle.php?id=<?= (int)$row['referencia_id'] ?>" class="btn-ver btn btn-sm btn-outline-primary">
-                                    <i class="bi bi-eye"></i> Ver Préstamo
-                                </a>
-                            <?php elseif (!empty($row['referencia_id']) && $row['tipo_evento'] === 'Observación'): ?>
-                                <a href="detalle.php?id=<?= (int)$row['referencia_id'] ?>" class="btn-ver btn btn-sm btn-outline-primary">
-                                    <i class="bi bi-eye"></i> Ver Préstamo Relacionado
-                                </a>
-                <?php if (empty($prestamos)): ?>
-                    <tr><td colspan="8" class="cell-empty">No hay registros que coincidan con los filtros.</td></tr>
                 <?php else: ?>
                     <?php foreach ($registros as $row): ?>
                     <tr>
