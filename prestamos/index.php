@@ -299,7 +299,7 @@ include __DIR__ . '/../includes/layout_header.php';
             <div class="mb-3">
                 <div class="d-flex justify-content-between align-items-center mb-1">
                     <label for="dni_alumno" class="form-label small fw-bold text-muted m-0">DNI del Usuario</label>
-                    <a href="/biblioteca-sql/usuario/" class="small text-danger text-decoration-none fw-semibold">
+                    <a href="/biblioteca-sql/usuarios/" class="small text-danger text-decoration-none fw-semibold">
                         <i class="bi bi-person-plus-fill me-1"></i>+ Agregar nuevo usuario
                     </a>
                 </div>
@@ -346,7 +346,7 @@ include __DIR__ . '/../includes/layout_header.php';
             <div class="mb-3">
                 <div class="d-flex justify-content-between align-items-center mb-1">
                     <label for="dni_profesor" class="form-label small fw-bold text-muted m-0">Profesor a Cargo (Opcional)</label>
-                    <a href="/biblioteca-sql/usuario/" class="small text-danger text-decoration-none fw-semibold">
+                    <a href="/biblioteca-sql/usuarios/" class="small text-danger text-decoration-none fw-semibold">
                         <i class="bi bi-person-plus-fill me-1"></i>+ Agregar nuevo profesor
                     </a>
                 </div>

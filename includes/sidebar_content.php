@@ -28,7 +28,7 @@
   <!-- Sist. de Etiquetado -->
   <a href="/biblioteca-sql/inventario/generar_qr.php" class="sidebar-nav-item <?= ($paginaActiva ?? '') === 'qr' ? 'activo' : '' ?>">
     <i class="fa-solid fa-qrcode"></i>
-    <span>Sist. de Etiquetado</span>
+    <span>Sistema de Etiquetado</span>
   </a>
 
   <!-- Préstamos -->
@@ -48,13 +48,13 @@
 
    <!-- Préstamos -->
   <a href="/biblioteca-sql/usuarios/" class="sidebar-nav-item <?= ($paginaActiva ?? '') === 'prestamos' ? 'activo' : '' ?>">
-    <i class="fa-solid fa-clipboard-user"></i>
+    <i class="fa-solid fa-users"></i>
     <span>Usuarios</span>
   </a>
 
    <!-- Préstamos -->
   <a href="/biblioteca-sql/historial/" class="sidebar-nav-item <?= ($paginaActiva ?? '') === 'prestamos' ? 'activo' : '' ?>">
-    <i class="fa-solid fa-clipboard-user"></i>
+    <i class="fa-solid fa-arrow-rotate-left"></i>
     <span>Historial</span>
   </a>
 

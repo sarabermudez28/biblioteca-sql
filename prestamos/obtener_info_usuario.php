@@ -26,9 +26,9 @@ try {
     // 2. Contar cuántos verdes, amarillos y rojos tiene en el historial de puntos
     $stmtHistorial = $pdo->prepare("
         SELECT 
-            SUM(CASE WHEN motivo LIKE '%Semáforo Verde%' THEN 1 ELSE 0 END) as verdes,
-            SUM(CASE WHEN motivo LIKE '%Semáforo Amarillo%' THEN 1 ELSE 0 END) as amarillos,
-            SUM(CASE WHEN motivo LIKE '%Semáforo Rojo%' THEN 1 ELSE 0 END) as rojos
+            SUM(CASE WHEN motivo LIKE '%verde%' THEN 1 ELSE 0 END) as verdes,
+            SUM(CASE WHEN motivo LIKE '%amarillo%' THEN 1 ELSE 0 END) as amarillos,
+            SUM(CASE WHEN motivo LIKE '%rojo%' THEN 1 ELSE 0 END) as rojos
         FROM historial_puntos 
         WHERE dni_usuario = ?
     ");

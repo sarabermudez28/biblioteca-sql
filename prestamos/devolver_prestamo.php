@@ -75,7 +75,8 @@ try {
     $stmtMaterial = $pdo->prepare("UPDATE inventario SET id_estado_material = ? WHERE id_material = ?");
     $stmtMaterial->execute([$id_estado_material, $id_material]);
 
-    $stmtUpdatePuntos = $pdo->prepare("UPDATE usuario SET puntos = puntos + ? WHERE dni_usuario = ?");
+    // LÍMITE DE PUNTOS: LEAST(100, ...) evita que suba de 100, y GREATEST(0, ...) evita que baje de 0
+    $stmtUpdatePuntos = $pdo->prepare("UPDATE usuario SET puntos = GREATEST(0, LEAST(100, puntos + ?)) WHERE dni_usuario = ?");
     $stmtUpdatePuntos->execute([$puntos_cambio, $dni_usuario]);
 
     $stmtHistorial = $pdo->prepare("INSERT INTO historial_puntos (dni_usuario, id_prestamo, puntos_cambio, motivo, fecha_hora) VALUES (?, ?, ?, ?, ?)");

@@ -121,7 +121,7 @@ include __DIR__ . '/../includes/layout_header.php';
     <!-- Tabla dinámica / Contenido -->
     <div class="card shadow-sm border-0">
         <?php if ($config === null): ?>
-            <div class="alert alert-info text-center py-5 m-0 border-0">
+            <div class="alert alert-danger text-center py-5 m-0 border-0">
                 <i class="bi bi-info-circle fs-2 d-block mb-2"></i>
                 <h4>Bienvenido al Inventario</h4>
                 <p class="mb-0 text-muted">Por favor, selecciona una categoría en las pestañas superiores para comenzar a visualizar y filtrar los materiales.</p>
