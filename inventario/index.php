@@ -282,7 +282,7 @@ include __DIR__ . '/../includes/layout_header.php';
     <div class="modal fade" id="modalEditarMaterial" tabindex="-1" aria-labelledby="modalEditarMaterialLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <form action="actualizar_material.php" method="POST">
+                <form action="actualizar_material.php" method="POST" onsubmit="return confirm('¿Estás seguro de que deseas actualizar este material?');"></form>
                     <div class="modal-header bg-danger text-white">
                         <h5 class="modal-title" id="modalEditarMaterialLabel">
                             <i class="bi bi-pencil-square me-2"></i>Editar Material (<?= htmlspecialchars($config['titulo']) ?>)

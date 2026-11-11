@@ -251,7 +251,7 @@ include __DIR__ . '/../includes/layout_header.php';
         </div>
     <?php endif; ?>
 
-    <form method="POST" class="material-form-main" id="materialForm">
+    <form method="POST" class="material-form-main" id="materialForm" onsubmit="return confirm('¿Estás seguro de que deseas guardar este nuevo material?');"></form>
 
         <fieldset class="form-fieldset">
             <legend>1. Datos generales</legend>
@@ -369,7 +369,7 @@ include __DIR__ . '/../includes/layout_header.php';
 
         <div class="form-actions">
             <a href="index.php" class="btn-secondary">Cancelar</a>
-            <button type="submit" class="btn-primary">Guardar material</button>
+            <button type="submit" class="tu-clase" onclick="return confirm('¿Estás seguro de que deseas guardar este nuevo material?');">Guardar</button>
         </div>
     </form>
 </div>

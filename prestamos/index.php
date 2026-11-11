@@ -262,7 +262,7 @@ include __DIR__ . '/../includes/layout_header.php';
 <!-- ========================================== -->
 <div class="modal-prestamo" id="modalPrestamo" style="display: none;">
     <button type="button" class="btn-cerrar-modal" id="btnCerrarModal">&times;</button>
-    <form action="procesar_prestamo.php" method="POST" autocomplete="off" class="bg-white p-4 rounded-4 shadow" style="max-width: 450px; width: 100%;">
+    <form action="procesar_prestamo.php" method="POST" onsubmit="return confirm('¿Estás seguro de registrar este préstamo?');" autocomplete="off" class="bg-white p-4 rounded-4 shadow" style="max-width: 450px; width: 100%;"></form>
         <h4 class="mb-3 fw-bold">Registrar Préstamo</h4>
 
         <div class="mb-3">
