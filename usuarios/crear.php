@@ -1,5 +1,6 @@
 
 <?php
+
 require_once __DIR__ . '/../conexion.php';
 require_once __DIR__ . '/../includes/auth.php';
 
@@ -7,8 +8,24 @@ $pdo = db();
 
 lb_requerir_login();
 
-$tituloPagina = 'Registrar nuevo socio';
+$tituloPagina = 'Registrar nuevo usuario';
 $paginaActiva = 'usuarios';
+
+$usuarioActual = lb_usuario_actual();
+
+$stmt = $pdo->prepare("
+    SELECT id_rol
+    FROM usuario
+    WHERE gmail = ? AND activo = 1
+");
+
+$stmt->execute([$usuarioActual]);
+$administrador = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$administrador || (int)$administrador['id_rol'] !== 1) {
+    header('Location: index.php?error=' . urlencode('No tenés permiso para registrar usuarios.'));
+    exit;
+}
 
 $error = '';
 
@@ -19,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $apellido = trim($_POST['apellido'] ?? '');
     $gmail = trim($_POST['gmail'] ?? '');
     $contra = $_POST['contra'] ?? '';
-    $rol = (int)($_POST['rol'] ?? 0);
+    $rol = filter_input(INPUT_POST, 'rol', FILTER_VALIDATE_INT);
 
     if (
         !ctype_digit($dni) ||
@@ -29,27 +46,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $contra === '' ||
         !in_array($rol, [3, 4], true)
     ) {
+
         $error = 'Completá correctamente todos los campos.';
+
     } else {
 
         try {
+
             $pdo->beginTransaction();
 
-            // Verificar que el DNI y el correo no estén registrados.
-            $verificar = $pdo->prepare(
-                "SELECT COUNT(*) FROM usuario
-                 WHERE dni_usuario = ? OR gmail = ?"
-            );
-            $verificar->execute([$dni, $gmail]);
+            // Comprobar DNI y correo
+            $stmt = $pdo->prepare("
+                SELECT COUNT(*)
+                FROM usuario
+                WHERE dni_usuario = ? OR gmail = ?
+            ");
 
-            if ($verificar->fetchColumn() > 0) {
-                throw new Exception('El DNI o el correo ya están registrados.');
+            $stmt->execute([$dni, $gmail]);
+
+            if ($stmt->fetchColumn() > 0) {
+
+                throw new Exception(
+                    'El DNI o el correo ya están registrados. Si el usuario está inactivo, podés reactivarlo desde el panel.'
+                );
+
             }
 
-            // Registrar el nuevo socio.
+            // Crear usuario
             $stmt = $pdo->prepare("
                 INSERT INTO usuario
-                (dni_usuario, nombre, apellido, gmail, contra, id_rol, puntos, activo)
+                (
+                    dni_usuario,
+                    nombre,
+                    apellido,
+                    gmail,
+                    contra,
+                    id_rol,
+                    puntos,
+                    activo
+                )
                 VALUES (?, ?, ?, ?, ?, ?, 100, 1)
             ");
 
@@ -62,18 +97,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $rol
             ]);
 
-            // Registrar los 100 puntos iniciales en el historial.
+            // Registrar puntaje inicial
             $stmt = $pdo->prepare("
                 INSERT INTO historial_puntos
                 (dni_usuario, id_prestamo, puntos_cambio, motivo, fecha_hora)
-                VALUES (?, NULL, 100, 'Puntaje inicial por alta de socio', NOW())
+                VALUES (?, NULL, 100, 'Puntaje inicial por alta de usuario', NOW())
             ");
 
             $stmt->execute([$dni]);
 
             $pdo->commit();
 
-            header('Location: index.php?mensaje=' . urlencode('Socio registrado correctamente.'));
+            header('Location: index.php?mensaje=' . urlencode('Usuario registrado correctamente.'));
             exit;
 
         } catch (Exception $e) {
@@ -83,19 +118,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             $error = $e instanceof PDOException
-                ? 'No se pudo registrar el socio. Verificá los datos ingresados.'
+                ? 'No se pudo registrar el usuario. Verificá los datos.'
                 : $e->getMessage();
+
         }
     }
 }
+
 ?>
 
 <?php require_once __DIR__ . '/../includes/layout_header.php'; ?>
 
 <div class="container-fluid py-4">
 
-    <h2>Registrar nuevo socio</h2>
-    <p class="text-muted">Completá los datos del alumno o profesor.</p>
+    <h2>Registrar nuevo usuario</h2>
+
+    <p class="text-muted">
+        Completá los datos del alumno o profesor.
+    </p>
 
     <?php if ($error): ?>
         <div class="alert alert-danger">
@@ -104,6 +144,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <?php endif; ?>
 
     <div class="card shadow-sm">
+
         <div class="card-body">
 
             <form method="POST">
@@ -112,8 +153,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     <div class="col-md-6 mb-3">
                         <label class="form-label">DNI</label>
+
                         <input
-                            type="number"
+                            type="text"
                             name="dni"
                             class="form-control"
                             required
@@ -123,6 +165,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Nombre</label>
+
                         <input
                             type="text"
                             name="nombre"
@@ -134,6 +177,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Apellido</label>
+
                         <input
                             type="text"
                             name="apellido"
@@ -145,6 +189,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Correo electrónico</label>
+
                         <input
                             type="email"
                             name="gmail"
@@ -154,11 +199,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         >
                     </div>
 
-                    <!-- Contraseña con botón para mostrar u ocultar -->
                     <div class="col-md-6 mb-3">
+
                         <label class="form-label">Contraseña</label>
 
                         <div class="input-group">
+
                             <input
                                 type="password"
                                 name="contra"
@@ -171,38 +217,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 class="btn btn-outline-secondary"
                                 type="button"
                                 onclick="mostrarContrasena()"
-                                aria-label="Mostrar contraseña"
                             >
                                 <i class="fa-solid fa-eye" id="iconoContra"></i>
                             </button>
+
                         </div>
+
                     </div>
 
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">Tipo de socio</label>
+
+                        <label class="form-label">Tipo de usuario</label>
 
                         <select name="rol" class="form-select" required>
+
                             <option value="">Seleccionar...</option>
 
-                            <option value="4" <?= (($_POST['rol'] ?? '') == '4') ? 'selected' : '' ?>>
+                            <option value="4"
+                                <?= (($_POST['rol'] ?? '') == '4') ? 'selected' : '' ?>>
                                 Alumno
                             </option>
 
-                            <option value="3" <?= (($_POST['rol'] ?? '') == '3') ? 'selected' : '' ?>>
+                            <option value="3"
+                                <?= (($_POST['rol'] ?? '') == '3') ? 'selected' : '' ?>>
                                 Profesor
                             </option>
+
                         </select>
+
                     </div>
 
                 </div>
 
                 <div class="alert alert-info">
                     <i class="fa-solid fa-star"></i>
-                    El socio comenzará con 100 puntos.
+                    El usuario comenzará con 100 puntos.
                 </div>
 
                 <button type="submit" class="btn btn-primary">
-                    <i class="fa-solid fa-save"></i> Registrar socio
+                    <i class="fa-solid fa-save"></i>
+                    Registrar usuario
                 </button>
 
                 <a href="index.php" class="btn btn-secondary">
@@ -212,6 +266,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </form>
 
         </div>
+
     </div>
 
 </div>
@@ -225,16 +280,13 @@ function mostrarContrasena() {
     if (campo.type === 'password') {
 
         campo.type = 'text';
-
-        icono.classList.remove('fa-eye');
-        icono.classList.add('fa-eye-slash');
+        icono.classList.replace('fa-eye', 'fa-eye-slash');
 
     } else {
 
         campo.type = 'password';
+        icono.classList.replace('fa-eye-slash', 'fa-eye');
 
-        icono.classList.remove('fa-eye-slash');
-        icono.classList.add('fa-eye');
     }
 }
 </script>
