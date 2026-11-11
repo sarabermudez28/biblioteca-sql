@@ -22,6 +22,13 @@ try {
         throw new Exception("Sesión inválida del bibliotecario.");
     }
 
+    // Asegurar que la columna dni_profesor exista antes de la transacción (Evita commits implícitos)
+    $stmtCol = $pdo->query("SHOW COLUMNS FROM prestamos LIKE 'dni_profesor'");
+    if (!$stmtCol->fetch()) {
+        $pdo->exec("ALTER TABLE prestamos ADD COLUMN dni_profesor INT DEFAULT NULL");
+    }
+
+    // Iniciar transacción de manera segura
     $pdo->beginTransaction();
 
     // Validar usuario solicitante
@@ -53,7 +60,7 @@ try {
     }
 
     // ==========================================
-    // PUNTO 2: VALIDACIÓN DE ESTADO "ROTO"
+    // VALIDACIÓN DE ESTADO "ROTO"
     // ==========================================
     if ($material['id_estado_material'] == 2 || strtolower($material['desc_estado_material']) === 'roto') {
         $stmtRec = $pdo->prepare("SELECT id_material FROM inventario WHERE id_estado_material IN (1, 3) AND id_material != ? LIMIT 3");
@@ -84,21 +91,18 @@ try {
         $fecha_hora_limite = $solo_fecha . ' 18:50:00';
     }
 
-    // Registrar préstamo (Manejo seguro por si la columna dni_profesor existe o no en la BD)
-    $stmtCol = $pdo->query("SHOW COLUMNS FROM prestamos LIKE 'dni_profesor'");
-    if (!$stmtCol->fetch()) {
-        $pdo->exec("ALTER TABLE prestamos ADD COLUMN dni_profesor INT DEFAULT NULL");
-    }
-
+    // Registrar préstamo
     $sql = "INSERT INTO prestamos (id_material, dni_usuario, dni_profesor, dni_bibliotecario, fecha_hora_registro, fecha_hora_devolucion, fecha_hora_limite_prestamo, id_estado_prestamo) 
             VALUES (?, ?, ?, ?, ?, NULL, ?, 1)";
     $pdo->prepare($sql)->execute([$id_material, $dni_usuario, ($dni_profesor !== '' ? $dni_profesor : null), $dni_bibliotecario, $fecha_registro, $fecha_hora_limite]);
 
+    // Si todo sale bien, se confirman los cambios
     $pdo->commit();
     header("Location: index.php?status=success");
     exit;
 
 } catch (Exception $e) {
+    // Si hay una transacción activa y ocurre un error, se deshacen los cambios (Rollback)
     if ($pdo->inTransaction()) {
         $pdo->rollBack();
     }
