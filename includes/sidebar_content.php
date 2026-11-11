@@ -18,7 +18,7 @@
       <a href="/biblioteca-sql/inventario/" class="sidebar-nav-item">Inventario <i class="fa-solid fa-book-bookmark"></i></a>
       <a href="/biblioteca-sql/inventario/generar_qr.php" class="sidebar-nav-item">Sist. de Etiquetado <i class="fa-solid fa-qrcode"></i></a>
       <a href="/biblioteca-sql/prestamos/" class="sidebar-nav-item">Prestamos <i class="fa-solid fa-clipboard-user"></i></a>
-      <a href="/biblioteca-sql/logout.php" class="sidebar-nav-item">Cerrar sesión <i class="fa-solid fa-right-from-bracket"></i></a>
+      <a href="/biblioteca-sql/logout.php" onclick="return confirm('¿Estás seguro de que deseas cerrar sesión?');" class="sidebar-nav-item">Cerrar sesión <i class="fa-solid fa-right-from-bracket"></i></a>
 
     </nav>
 
@@ -30,7 +30,7 @@
           <p class="sidebar-user-email">admin@biblioteca.gob</p>
         </div>
       </div>
-      <a href="/biblioteca-sql/logout.php" class="sidebar-logout">
+      <a href="/biblioteca-sql/logout.php" onclick="return confirm('¿Estás seguro de que deseas cerrar sesión?');" class="sidebar-logout"></a>
         <?= lb_icon('log-out') ?>Cerrar sesión
       </a>
     </div>

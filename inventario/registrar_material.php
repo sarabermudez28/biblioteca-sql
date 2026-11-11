@@ -97,7 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // 4) INSERTAR EN LA TABLA ESPECÍFICA
             // ----------------------------------------
             switch ($id_categoria) {
-                case 1: // LIBROS[cite: 2]
+                case 1: // LIBROS
                     $nombre  = trim($_POST['nombre'] ?? '');
                     $autor   = trim($_POST['autor'] ?? '');
                     $genero  = trim($_POST['genero'] ?? '');
@@ -116,7 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ]);
                     break;
 
-                case 3: // MAPAS / MATERIALES GEOGRÁFICOS[cite: 2]
+                case 3: // MAPAS / MATERIALES GEOGRÁFICOS
                     $tipo   = trim($_POST['tipo_geo'] ?? '');
                     $region = trim($_POST['region'] ?? '');
                     $escala = trim($_POST['escala'] ?? '');
@@ -136,7 +136,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ]);
                     break;
 
-                case 4: // INSTRUMENTOS DE MEDICIÓN (Reglas)[cite: 2]
+                case 4: // INSTRUMENTOS DE MEDICIÓN (Reglas)
                     $tipo_inst  = trim($_POST['tipo_inst'] ?? '');
                     $longitud   = !empty($_POST['longitud_cm']) ? (float)$_POST['longitud_cm'] : null;
                     if ($tipo_inst === '') throw new Exception("El tipo es obligatorio.");
@@ -152,8 +152,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ]);
                     break;
 
-                case 5: // TABLEROS (Dibujo Técnico)[cite: 2]
-                case 6: // CAJAS (Dibujo Técnico)[cite: 2]
+                case 5: // TABLEROS (Dibujo Técnico)
+                case 6: // CAJAS (Dibujo Técnico)
                     $tipo_dt     = trim($_POST['tipo_dt'] ?? 'tablero');
                     $descripcion = trim($_POST['descripcion_dt'] ?? '');
 
@@ -168,7 +168,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ]);
                     break;
 
-                case 7: // JUEGOS DIDÁCTICOS[cite: 2]
+                case 7: // JUEGOS DIDÁCTICOS
                     $tipo_did  = trim($_POST['tipo_did'] ?? '');
                     $tematica  = trim($_POST['tematica'] ?? '');
                     $piezas    = !empty($_POST['piezas']) ? (int)$_POST['piezas'] : null;
@@ -251,8 +251,8 @@ include __DIR__ . '/../includes/layout_header.php';
         </div>
     <?php endif; ?>
 
-    <form method="POST" class="material-form-main" id="materialForm" onsubmit="return confirm('¿Estás seguro de que deseas guardar este nuevo material?');"></form>
-
+    <!-- ACÁ ESTÁ EL ARREGLO: Cerramos bien la etiqueta <form> y no tiene onsubmit para no chocar con el JS -->
+    <form method="POST" class="material-form-main" id="materialForm">
         <fieldset class="form-fieldset">
             <legend>1. Datos generales</legend>
 
@@ -369,6 +369,7 @@ include __DIR__ . '/../includes/layout_header.php';
 
         <div class="form-actions">
             <a href="index.php" class="btn-secondary">Cancelar</a>
+            <!-- El botón tiene la confirmación directa -->
             <button type="submit" class="tu-clase" onclick="return confirm('¿Estás seguro de que deseas guardar este nuevo material?');">Guardar</button>
         </div>
     </form>

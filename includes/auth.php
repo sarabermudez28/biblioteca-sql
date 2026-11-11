@@ -7,6 +7,28 @@
  */
 session_start();
 
+// --- INICIO DE LA TAREA DE MORENA: PERIODO DE INACTIVIDAD (15 MINUTOS) ---
+$tiempo_limite = 15 * 60; // 15 minutos en segundos (900)
+
+if (isset($_SESSION['lb_ultimo_acceso'])) {
+    $tiempo_transcurrido = time() - $_SESSION['lb_ultimo_acceso'];
+    
+    if ($tiempo_transcurrido > $tiempo_limite) {
+        // Si pasaron más de 15 minutos, destruimos la sesión
+        $_SESSION = [];
+        session_destroy();
+        session_start(); // Volvemos a iniciar para poder guardar un mensaje
+        $_SESSION['lb_flash'] = ['tipo' => 'error', 'mensaje' => 'Tu sesión ha expirado por inactividad. Por favor, inicia sesión nuevamente.'];
+        
+        // Redirigir al index (login)
+        header('Location: index.php');
+        exit;
+    }
+}
+// Actualizamos el tiempo de la última actividad en cada petición
+$_SESSION['lb_ultimo_acceso'] = time();
+// --- FIN DE LA TAREA DE MORENA ---
+
 function lb_esta_autenticado(): bool {
     return !empty($_SESSION['lb_usuario']);
 }
@@ -33,3 +55,4 @@ function lb_tomar_flash(): ?array {
     unset($_SESSION['lb_flash']);
     return $f;
 }
+?>
