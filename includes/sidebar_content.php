@@ -65,6 +65,13 @@
     <span>Cerrar sesión</span>
   </a>
 </nav>
+    <nav class="sidebar-nav">
+      <a href="/biblioteca-sql/panel.php" class="sidebar-nav-item">Panel <i class="fa-solid fa-bars"></i></i></a>
+      <a href="/biblioteca-sql/inventario/" class="sidebar-nav-item">Inventario <i class="fa-solid fa-book-bookmark"></i></a>
+      <a href="/biblioteca-sql/usuarios/" class="sidebar-nav-item">Usuarios <i class="fa-solid fa-users"></i></a>
+      <a href="/biblioteca-sql/inventario/generar_qr.php" class="sidebar-nav-item">Sist. de Etiquetado <i class="fa-solid fa-qrcode"></i></a>
+      <a href="/biblioteca-sql/prestamos/" class="sidebar-nav-item">Prestamos <i class="fa-solid fa-clipboard-user"></i></a>
+      <a href="/biblioteca-sql/logout.php" class="sidebar-nav-item">Cerrar sesión <i class="fa-solid fa-right-from-bracket"></i></a>
 
 <div class="sidebar-footer">
   <div class="sidebar-user">
