@@ -1,25 +1,39 @@
 
 <?php
 
-// Conexión a la base de datos
 require_once __DIR__ . '/../conexion.php';
 require_once __DIR__ . '/../includes/auth.php';
 
-// Obtener conexión
 $pdo = db();
 
-$tituloPagina = 'Dar de baja socio';
+lb_requerir_login();
+
+$tituloPagina = 'Dar de baja usuario';
 $paginaActiva = 'usuarios';
 
-// Obtener DNI
-$dni = $_GET['dni'] ?? '';
+$usuarioActual = lb_usuario_actual();
+
+$stmt = $pdo->prepare("
+    SELECT id_rol
+    FROM usuario
+    WHERE gmail = ? AND activo = 1
+");
+
+$stmt->execute([$usuarioActual]);
+$administrador = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$administrador || (int)$administrador['id_rol'] !== 1) {
+    header('Location: index.php?error=' . urlencode('No tenés permiso para realizar esta acción.'));
+    exit;
+}
+
+$dni = trim($_GET['dni'] ?? '');
 
 if ($dni === '') {
     header('Location: index.php');
     exit;
 }
 
-// Buscar socio
 $stmt = $pdo->prepare("
     SELECT *
     FROM usuario
@@ -31,27 +45,41 @@ $stmt = $pdo->prepare("
 $stmt->execute([$dni]);
 $socio = $stmt->fetch(PDO::FETCH_ASSOC);
 
-// Si no existe o ya está inactivo
 if (!$socio) {
-    header('Location: index.php');
+    header('Location: index.php?error=' . urlencode('Usuario no encontrado o ya inactivo.'));
     exit;
 }
 
-// Confirmar baja
+$error = '';
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-    $stmt = $pdo->prepare("
-        UPDATE usuario
-        SET activo = 0
-        WHERE dni_usuario = ?
-        AND id_rol IN (3, 4)
-        AND activo = 1
-    ");
+    try {
 
-    $stmt->execute([$dni]);
+        $stmt = $pdo->prepare("
+            UPDATE usuario
+            SET activo = 0
+            WHERE dni_usuario = ?
+            AND id_rol IN (3, 4)
+            AND activo = 1
+        ");
 
-    header('Location: index.php?mensaje=' . urlencode('El socio fue dado de baja correctamente.'));
-    exit;
+        $stmt->execute([$dni]);
+
+        if ($stmt->rowCount() === 1) {
+
+            header('Location: index.php?mensaje=' . urlencode('El usuario fue dado de baja correctamente.'));
+            exit;
+
+        }
+
+        $error = 'No se pudo realizar la baja.';
+
+    } catch (PDOException $e) {
+
+        $error = 'Ocurrió un error al dar de baja al usuario.';
+
+    }
 }
 
 ?>
@@ -64,7 +92,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <div class="card-body">
 
-            <h2>Dar de baja a un socio</h2>
+            <h2>Dar de baja a un usuario</h2>
+
+            <?php if ($error): ?>
+                <div class="alert alert-danger">
+                    <?= htmlspecialchars($error) ?>
+                </div>
+            <?php endif; ?>
 
             <div class="alert alert-warning mt-3">
 
@@ -76,13 +110,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <br><br>
 
-                El socio quedará inactivo, pero sus datos y su historial se conservarán.
+                El usuario quedará inactivo, pero sus datos,
+                puntos e historial se conservarán.
 
             </div>
 
             <form method="POST">
 
                 <button type="submit" class="btn btn-danger">
+                    <i class="fa-solid fa-user-minus"></i>
                     Confirmar baja
                 </button>
 
