@@ -1,18 +1,17 @@
+
 <?php
 
-// Conexión a la base de datos
 require_once __DIR__ . '/../conexion.php';
 require_once __DIR__ . '/../includes/auth.php';
 
-// Obtener conexión
 $pdo = db();
 
 $tituloPagina = 'Usuarios';
 $paginaActiva = 'usuarios';
 
 $buscar = trim($_GET['buscar'] ?? '');
+$estado = $_GET['estado'] ?? 'todos';
 
-// Consulta de usuarios
 $sql = "
     SELECT u.*, r.desc_rol
     FROM usuario u
@@ -22,16 +21,25 @@ $sql = "
 
 $params = [];
 
+if ($estado === 'activos') {
+    $sql .= " AND u.activo = 1";
+} elseif ($estado === 'inactivos') {
+    $sql .= " AND u.activo = 0";
+}
+
 if ($buscar !== '') {
 
-    $sql .= " AND (
-        u.nombre LIKE ?
-        OR u.apellido LIKE ?
-        OR CAST(u.dni_usuario AS CHAR) LIKE ?
-    )";
+    $sql .= "
+        AND (
+            u.nombre LIKE ?
+            OR u.apellido LIKE ?
+            OR CAST(u.dni_usuario AS CHAR) LIKE ?
+            OR u.gmail LIKE ?
+        )
+    ";
 
     $valor = "%$buscar%";
-    $params = [$valor, $valor, $valor];
+    $params = [$valor, $valor, $valor, $valor];
 }
 
 $sql .= " ORDER BY u.apellido ASC, u.nombre ASC";
@@ -58,46 +66,87 @@ $usuarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         <a href="crear.php" class="btn btn-primary">
             <i class="fa-solid fa-user-plus"></i>
-            Agregar socio
+            Agregar usuario
         </a>
 
     </div>
 
     <?php if (isset($_GET['mensaje'])): ?>
-
-        <div class="alert alert-success">
+        <div class="alert alert-success alert-dismissible fade show">
             <?= htmlspecialchars($_GET['mensaje']) ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
+    <?php endif; ?>
 
+    <?php if (isset($_GET['error'])): ?>
+        <div class="alert alert-danger alert-dismissible fade show">
+            <?= htmlspecialchars($_GET['error']) ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
     <?php endif; ?>
 
     <!-- Buscador -->
-    <form method="GET" class="mb-3">
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
 
-        <div class="input-group">
+            <form method="GET">
 
-            <input
-                type="text"
-                name="buscar"
-                class="form-control"
-                placeholder="Buscar por nombre, apellido o DNI..."
-                value="<?= htmlspecialchars($buscar) ?>"
-            >
+                <div class="row g-2">
 
-            <button class="btn btn-outline-primary" type="submit">
-                <i class="fa-solid fa-search"></i>
-                Buscar
-            </button>
+                    <div class="col-md-7">
+                        <input
+                            type="text"
+                            name="buscar"
+                            class="form-control"
+                            placeholder="Buscar por nombre, apellido, DNI o correo..."
+                            value="<?= htmlspecialchars($buscar) ?>"
+                        >
+                    </div>
 
-            <a href="index.php" class="btn btn-outline-secondary">
-                Limpiar
-            </a>
+                    <div class="col-md-3">
+
+                        <select name="estado" class="form-select">
+
+                            <option value="todos"
+                                <?= $estado === 'todos' ? 'selected' : '' ?>>
+                                Todos los usuarios
+                            </option>
+
+                            <option value="activos"
+                                <?= $estado === 'activos' ? 'selected' : '' ?>>
+                                Solo activos
+                            </option>
+
+                            <option value="inactivos"
+                                <?= $estado === 'inactivos' ? 'selected' : '' ?>>
+                                Solo inactivos
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    <div class="col-md-2 d-flex gap-2">
+
+                        <button type="submit" class="btn btn-outline-primary w-100">
+                            <i class="fa-solid fa-search"></i>
+                            Buscar
+                        </button>
+
+                        <a href="index.php" class="btn btn-outline-secondary">
+                            <i class="fa-solid fa-rotate-left"></i>
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </form>
 
         </div>
+    </div>
 
-    </form>
-
-    <!-- Tabla de usuarios -->
+    <!-- Tabla -->
     <div class="card shadow-sm">
 
         <div class="card-body table-responsive">
@@ -112,7 +161,7 @@ $usuarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <th>Tipo</th>
                         <th>Puntos</th>
                         <th>Estado</th>
-                        <th>Acciones</th>
+                        <th class="text-center">Acciones</th>
                     </tr>
                 </thead>
 
@@ -122,16 +171,19 @@ $usuarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                         <?php foreach ($usuarios as $u): ?>
 
+                            <?php
+                                $dni = $u['dni_usuario'];
+                                $activo = (int)$u['activo'] === 1;
+                            ?>
+
                             <tr>
 
                                 <td>
-                                    <?= htmlspecialchars($u['dni_usuario']) ?>
+                                    <?= htmlspecialchars($dni) ?>
                                 </td>
 
                                 <td>
-                                    <?= htmlspecialchars(
-                                        $u['apellido'] . ', ' . $u['nombre']
-                                    ) ?>
+                                    <?= htmlspecialchars($u['apellido'] . ', ' . $u['nombre']) ?>
                                 </td>
 
                                 <td>
@@ -150,54 +202,88 @@ $usuarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                                 <td>
 
-                                    <?php if ($u['activo']): ?>
-
-                                        <span class="badge bg-success">
-                                            Activo
-                                        </span>
-
+                                    <?php if ($activo): ?>
+                                        <span class="badge bg-success">Activo</span>
                                     <?php else: ?>
-
-                                        <span class="badge bg-secondary">
-                                            Inactivo
-                                        </span>
-
+                                        <span class="badge bg-secondary">Inactivo</span>
                                     <?php endif; ?>
 
                                 </td>
 
-                                <td>
+                                <td class="text-center">
 
-                                    <!-- Ver usuario -->
-                                    <a
-                                        href="ver.php?dni=<?= urlencode($u['dni_usuario']) ?>"
-                                        class="btn btn-sm btn-info text-white"
-                                        title="Ver información"
-                                    >
-                                        <i class="fa-solid fa-eye"></i>
-                                    </a>
+                                    <div class="d-flex justify-content-center gap-1 flex-wrap">
 
-                                    <?php if ($u['activo']): ?>
-
-                                        <!-- Descontar puntos -->
                                         <a
-                                            href="puntos.php?dni=<?= urlencode($u['dni_usuario']) ?>"
-                                            class="btn btn-sm btn-warning"
-                                            title="Descontar puntos"
+                                            href="ver.php?dni=<?= urlencode($dni) ?>"
+                                            class="btn btn-sm btn-info text-white"
+                                            title="Ver información"
                                         >
-                                            <i class="fa-solid fa-star"></i>
+                                            <i class="fa-solid fa-eye"></i>
                                         </a>
 
-                                        <!-- Dar de baja -->
                                         <a
-                                            href="eliminar.php?dni=<?= urlencode($u['dni_usuario']) ?>"
-                                            class="btn btn-sm btn-danger"
-                                            title="Dar de baja"
+                                            href="editar.php?dni=<?= urlencode($dni) ?>"
+                                            class="btn btn-sm btn-primary"
+                                            title="Editar usuario"
                                         >
-                                            <i class="fa-solid fa-user-minus"></i>
+                                            <i class="fa-solid fa-pen"></i>
                                         </a>
 
-                                    <?php endif; ?>
+                                        <?php if ($activo): ?>
+
+                                            <a
+                                                href="puntos.php?dni=<?= urlencode($dni) ?>"
+                                                class="btn btn-sm btn-warning"
+                                                title="Descontar puntos"
+                                            >
+                                                <i class="fa-solid fa-star"></i>
+                                            </a>
+
+                                            <a
+                                                href="sumar_puntos.php?dni=<?= urlencode($dni) ?>"
+                                                class="btn btn-sm btn-success"
+                                                title="Sumar puntos"
+                                            >
+                                                <i class="fa-solid fa-plus"></i>
+                                            </a>
+
+                                            <a
+                                                href="eliminar.php?dni=<?= urlencode($dni) ?>"
+                                                class="btn btn-sm btn-danger"
+                                                title="Dar de baja"
+                                            >
+                                                <i class="fa-solid fa-user-minus"></i>
+                                            </a>
+
+                                        <?php else: ?>
+
+                                            <form
+                                                action="reactivar.php"
+                                                method="POST"
+                                                class="d-inline"
+                                                onsubmit="return confirm('¿Deseás reactivar este usuario?');"
+                                            >
+
+                                                <input
+                                                    type="hidden"
+                                                    name="dni"
+                                                    value="<?= htmlspecialchars($dni) ?>"
+                                                >
+
+                                                <button
+                                                    type="submit"
+                                                    class="btn btn-sm btn-success"
+                                                    title="Reactivar usuario"
+                                                >
+                                                    <i class="fa-solid fa-user-check"></i>
+                                                </button>
+
+                                            </form>
+
+                                        <?php endif; ?>
+
+                                    </div>
 
                                 </td>
 
@@ -208,7 +294,7 @@ $usuarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <?php else: ?>
 
                         <tr>
-                            <td colspan="7" class="text-center text-muted">
+                            <td colspan="7" class="text-center text-muted py-4">
                                 No se encontraron usuarios.
                             </td>
                         </tr>
