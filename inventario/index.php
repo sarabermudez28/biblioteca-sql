@@ -67,10 +67,25 @@ include __DIR__ . '/../includes/layout_header.php';
         </div>
 
         <!-- Filtros dinámicos específicos (Solo se muestran si hay una categoría seleccionada) -->
+        <!-- Filtros dinámicos específicos y Buscador Global -->
         <?php if ($config !== null): ?>
             <div class="card shadow-sm border-0 mb-3">
                 <div class="card-body bg-white py-0 px-3">
                     <div class="row g-2 align-items-center py-2">
+
+                        <!-- NUEVO: Campo de búsqueda global por ID o Nombre -->
+                        <div class="col-md-3 mb-2">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-light text-muted border-end-0">
+                                    <i class="bi bi-search"></i>
+                                </span>
+                                <input type="text" name="q" class="form-control form-control-sm border-start-0 ps-0 shadow-none bg-light"
+                                    placeholder="Buscar por ID o Nombre..."
+                                    value="<?= htmlspecialchars($_GET['q'] ?? '') ?>">
+                            </div>
+                        </div>
+
+                        <!-- Filtros específicos existentes -->
                         <?php foreach ($config['filtros'] as $filtro): ?>
                             <div class="col-md-3 mb-2">
                                 <?php if (isset($filtro['type']) && $filtro['type'] === 'select'): ?>
@@ -104,6 +119,7 @@ include __DIR__ . '/../includes/layout_header.php';
                                 <?php endif; ?>
                             </div>
                         <?php endforeach; ?>
+
                         <div class="col-md-auto d-flex gap-2 ms-auto mb-2">
                             <button type="submit" class="btn btn-danger btn-sm px-3">
                                 <i class="bi bi-filter"></i> Filtrar

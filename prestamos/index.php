@@ -288,106 +288,151 @@ include __DIR__ . '/../includes/layout_header.php';
     </div>
 </div>
 
-    <!-- ========================================== -->
-    <!-- MODAL PARA CARGAR PRÉSTAMOS -->
-    <!-- ========================================== -->
-    <div class="modal-prestamo" id="modalPrestamo" style="display: none;">
-        <button type="button" class="btn-cerrar-modal" id="btnCerrarModal">&times;</button>
-        <form action="procesar_prestamo.php" method="POST" autocomplete="off" class="bg-white p-4 rounded-4 shadow" style="max-width: 450px; width: 100%;">
-            <h4 class="mb-3 fw-bold">Registrar Préstamo</h4>
+<!-- ========================================== -->
+<!-- MODAL PARA CARGAR PRÉSTAMOS -->
+<!-- ========================================== -->
+<div class="modal-prestamo" id="modalPrestamo" style="display: none;">
+    <button type="button" class="btn-cerrar-modal" id="btnCerrarModal">&times;</button>
+    <form action="procesar_prestamo.php" method="POST" autocomplete="off" class="bg-white p-4 rounded-4 shadow" style="max-width: 450px; width: 100%;">
+        <h4 class="mb-3 fw-bold">Registrar Préstamo</h4>
 
-            <div class="mb-3">
+        <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <label for="dni_alumno" class="form-label small fw-bold text-muted m-0">DNI del Usuario</label>
+                <a href="/biblioteca-sql/usuarios/" class="small text-danger text-decoration-none fw-semibold">
+                    <i class="bi bi-person-plus-fill me-1"></i>+ Agregar nuevo usuario
+                </a>
+            </div>
+            <input type="text" name="dni_alumno" id="dni_alumno" class="form-control bg-light border-0" list="usuarios" placeholder="Buscar DNI..." required>
+            <datalist id="usuarios">
+                <?php foreach ($usuarios as $u): ?>
+                    <option value="<?= $u['dni_usuario'] ?>"><?= $u['apellido'] . ', ' . $u['nombre'] ?></option>
+                <?php endforeach; ?>
+            </datalist>
+
+            <!-- CONTENEDOR PARA EL PUNTAJE Y SEMÁFORO -->
+            <div id="info-usuario-prestamo" class="mt-2 p-2 rounded bg-light border" style="display: none; font-size: 0.85rem;">
+
+                <!-- NUEVO: Espacio para mostrar el nombre y apellido -->
+                <div class="mb-2 text-dark fw-bold border-bottom pb-1">
+                    <i class="bi bi-person-fill text-primary me-1"></i> <span id="lbl-nombre-usuario">Cargando...</span>
+                </div>
+
                 <div class="d-flex justify-content-between align-items-center mb-1">
-                    <label for="dni_alumno" class="form-label small fw-bold text-muted m-0">DNI del Usuario</label>
-                    <a href="/biblioteca-sql/usuarios/" class="small text-danger text-decoration-none fw-semibold">
-                        <i class="bi bi-person-plus-fill me-1"></i>+ Agregar nuevo usuario
-                    </a>
+                    <span>Puntaje actual: <strong id="lbl-puntos" class="fs-6">0</strong> pts</span>
+                    <span id="lbl-estado-badge" class="badge bg-secondary">Cargando...</span>
                 </div>
-                <input type="text" name="dni_alumno" id="dni_alumno" class="form-control bg-light border-0" list="usuarios" placeholder="Buscar DNI..." required>
-                <datalist id="usuarios">
-                    <?php foreach ($usuarios as $u): ?>
-                        <option value="<?= $u['dni_usuario'] ?>"><?= $u['apellido'] . ', ' . $u['nombre'] ?></option>
-                    <?php endforeach; ?>
-                </datalist>
 
-                <!-- CONTENEDOR PARA EL PUNTAJE Y SEMÁFORO -->
-                <div id="info-usuario-prestamo" class="mt-2 p-2 rounded bg-light border" style="display: none; font-size: 0.85rem;">
+                <!-- Contadores de semáforo -->
+                <div id="seccion-semaforos" class="d-flex justify-content-around text-center pt-1 border-top">
+                    <div class="text-success fw-bold"><i class="bi bi-circle-fill"></i> <span id="cnt-verde">0</span> verdes</div>
+                    <div class="text-warning text-yellow fw-bold"><i class="bi bi-circle-fill"></i> <span id="cnt-amarillo">0</span> amarillos</div>
+                    <div class="text-danger fw-bold"><i class="bi bi-circle-fill"></i> <span id="cnt-rojo">0</span> rojos</div>
+                </div>
 
-                    <!-- NUEVO: Espacio para mostrar el nombre y apellido -->
-                    <div class="mb-2 text-dark fw-bold border-bottom pb-1">
-                        <i class="bi bi-person-fill text-primary me-1"></i> <span id="lbl-nombre-usuario">Cargando...</span>
-                    </div>
+                <!-- Mensaje si no tiene préstamos -->
+                <div id="msg-sin-prestamos" class="text-muted text-center pt-1 border-top fst-italic" style="display: none; font-size: 0.75rem;">
+                    <i class="bi bi-info-circle me-1"></i> Este usuario todavía no realizó ningún préstamo.
+                </div>
 
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <span>Puntaje actual: <strong id="lbl-puntos" class="fs-6">0</strong> pts</span>
-                        <span id="lbl-estado-badge" class="badge bg-secondary">Cargando...</span>
-                    </div>
-
-                    <!-- Contadores de semáforo -->
-                    <div id="seccion-semaforos" class="d-flex justify-content-around text-center pt-1 border-top">
-                        <div class="text-success fw-bold"><i class="bi bi-circle-fill"></i> <span id="cnt-verde">0</span> verdes</div>
-                        <div class="text-warning text-yellow fw-bold"><i class="bi bi-circle-fill"></i> <span id="cnt-amarillo">0</span> amarillos</div>
-                        <div class="text-danger fw-bold"><i class="bi bi-circle-fill"></i> <span id="cnt-rojo">0</span> rojos</div>
-                    </div>
-
-                    <!-- Mensaje si no tiene préstamos -->
-                    <div id="msg-sin-prestamos" class="text-muted text-center pt-1 border-top fst-italic" style="display: none; font-size: 0.75rem;">
-                        <i class="bi bi-info-circle me-1"></i> Este usuario todavía no realizó ningún préstamo.
-                    </div>
-
-                    <!-- Mensaje de bloqueo por puntaje bajo -->
-                    <div id="msg-bloqueado" class="alert alert-danger py-1 px-2 mt-2 mb-0 small text-center fw-bold" style="display: none;">
-                        <i class="bi bi-ban me-1"></i> Usuario bloqueado: Puntaje crítico (-50 pts). No se permiten préstamos.
-                    </div>
+                <!-- Mensaje de bloqueo por puntaje bajo -->
+                <div id="msg-bloqueado" class="alert alert-danger py-1 px-2 mt-2 mb-0 small text-center fw-bold" style="display: none;">
+                    <i class="bi bi-ban me-1"></i> Usuario bloqueado: Puntaje crítico (-50 pts). No se permiten préstamos.
                 </div>
             </div>
+        </div>
 
-            <!-- PUNTO 3: CAMPO PROFESOR A CARGO CON OPCIÓN DE AGREGAR -->
-            <div class="mb-3">
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                    <label for="dni_profesor" class="form-label small fw-bold text-muted m-0">Profesor a Cargo (Opcional)</label>
-                    <a href="/biblioteca-sql/usuarios/" class="small text-danger text-decoration-none fw-semibold">
-                        <i class="bi bi-person-plus-fill me-1"></i>+ Agregar nuevo profesor
-                    </a>
-                </div>
-                <input type="text" name="dni_profesor" id="dni_profesor" class="form-control bg-light border-0" list="profesores" placeholder="Buscar DNI o profesor...">
-                <datalist id="profesores">
-                    <?php foreach ($profesores as $prof): ?>
-                        <option value="<?= $prof['dni_usuario'] ?>"><?= $prof['apellido'] . ', ' . $prof['nombre'] ?></option>
-                    <?php endforeach; ?>
-                </datalist>
+        <!-- PUNTO 3: CAMPO PROFESOR A CARGO CON OPCIÓN DE AGREGAR -->
+        <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <label for="dni_profesor" class="form-label small fw-bold text-muted m-0">Profesor a Cargo (Opcional)</label>
+                <a href="/biblioteca-sql/usuarios/" class="small text-danger text-decoration-none fw-semibold">
+                    <i class="bi bi-person-plus-fill me-1"></i>+ Agregar nuevo profesor
+                </a>
             </div>
+            <select name="dni_profesor" id="dni_profesor" class="form-select bg-light border-0">
+                <option value="">-- Sin profesor a cargo --</option>
+                <?php foreach ($profesores as $prof): ?>
+                    <option value="<?= $prof['dni_usuario'] ?>">
+                        <?= htmlspecialchars($prof['apellido'] . ', ' . $prof['nombre']) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        
+        <div class="mb-4">
+            <label for="lectorQR" class="form-label small fw-bold text-muted">ID Material (Escaneo o Selección)</label>
+            <input type="text" name="id_material" id="lectorQR" class="form-control bg-light border-0" list="lista_materiales" placeholder="Escanee o busque material..." required>
+            <datalist id="lista_materiales">
+                <?php foreach ($materiales as $mat): ?>
+                    <option value="<?= htmlspecialchars($mat['id_material']) ?>">
+                        <?= htmlspecialchars($mat['id_material'] . ' - ' . $mat['nombre']) ?>
+                    </option>
+                <?php endforeach; ?>
+            </datalist>
+        </div>
 
-            <div class="mb-4">
-                <label for="lectorQR" class="form-label small fw-bold text-muted">ID Material (Escaneo o Selección)</label>
-                <input type="text" name="id_material" id="lectorQR" class="form-control bg-light border-0" list="lista_materiales" placeholder="Escanee o busque material..." required>
-                <datalist id="lista_materiales">
-                    <?php foreach ($materiales as $mat): ?>
-                        <option value="<?= htmlspecialchars($mat['id_material']) ?>">
-                            <?= htmlspecialchars($mat['id_material'] . ' - ' . $mat['nombre']) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </datalist>
-            </div>
+        <button type="submit" class="btn btn-primary w-100 fw-bold rounded-3">Confirmar Préstamo</button>
+    </form>
+</div>
 
-            <button type="submit" class="btn btn-primary w-100 fw-bold rounded-3">Confirmar Préstamo</button>
-        </form>
-    </div>
+<!-- ========================================== -->
+<!-- MODAL: VER DETALLES DEL PRÉSTAMO -->
+<!-- ========================================== -->
+<div class="modal-prestamo" id="modalVerDetallesPrestamo" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1050;">
+    <div class="bg-white p-4 rounded-4 shadow position-relative" style="max-width: 550px; width: 100%; max-height: 90vh; overflow-y: auto;">
+        <button type="button" class="btn-close position-absolute top-0 end-0 m-3" id="btnCerrarModalDetalles" aria-label="Cerrar"></button>
 
-    <!-- ========================================== -->
-    <!-- MODAL: VER DETALLES DEL PRÉSTAMO -->
-    <!-- ========================================== -->
-    <div class="modal-prestamo" id="modalVerDetallesPrestamo" style="display: none;">
-        <button type="button" class="btn-cerrar-modal" id="btnCerrarModalDetalles">&times;</button>
-        <div class="bg-white p-4 rounded-4 shadow" style="max-width: 550px; width: 100%; max-height: 90vh; overflow-y: auto;">
-            <h4 class="mb-3 fw-bold text-danger">
+        <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+            <h4 class="mb-0 fw-bold text-danger fs-5">
                 <i class="bi bi-info-circle me-2"></i>Detalles del Préstamo #<span id="ver_id_prestamo"></span>
             </h4>
-            <button type="button" class="btn btn-secondary w-100 fw-bold rounded-3" id="btnCerrarModalDetallesBtn">Cerrar</button>
+            <span id="ver_estado_prestamo" class="badge bg-secondary">Cargando...</span>
         </div>
+
+        <div class="row g-3 small mb-4">
+            <div class="col-12">
+                <span class="text-muted d-block">Material Prestado:</span>
+                <strong class="text-dark fs-6">#<span id="ver_id_material"></span> - <span id="ver_nombre_material"></span></strong>
+            </div>
+            <div class="col-6">
+                <span class="text-muted d-block">Categoría:</span>
+                <span id="ver_categoria" class="fw-semibold text-dark"></span>
+            </div>
+            <div class="col-6">
+                <span class="text-muted d-block">Detalle / Atributo:</span>
+                <span id="ver_atributo_detalle" class="fw-semibold text-dark"></span>
+            </div>
+            <div class="col-12">
+                <span class="text-muted d-block">Estado del Material:</span>
+                <span id="ver_estado_material" class="fw-semibold text-dark"></span>
+            </div>
+            <div class="col-12 border-top pt-2">
+                <span class="text-muted d-block">Usuario Asignado:</span>
+                <strong class="text-dark"><span id="ver_usuario"></span> (DNI: <span id="ver_dni_usuario"></span>)</strong>
+            </div>
+            <div class="col-12">
+                <span class="text-muted d-block">Bibliotecario a Cargo:</span>
+                <span id="ver_dni_bibliotecario" class="fw-semibold text-dark"></span>
+            </div>
+            <div class="col-4 border-top pt-2">
+                <span class="text-muted d-block" style="font-size: 0.75rem;">F. Registro:</span>
+                <span id="ver_fecha_registro" class="fw-semibold text-dark" style="font-size: 0.8rem;"></span>
+            </div>
+            <div class="col-4 border-top pt-2">
+                <span class="text-muted d-block" style="font-size: 0.75rem;">F. Límite:</span>
+                <span id="ver_fecha_limite" class="fw-semibold text-dark" style="font-size: 0.8rem;"></span>
+            </div>
+            <div class="col-4 border-top pt-2">
+                <span class="text-muted d-block" style="font-size: 0.75rem;">F. Devolución:</span>
+                <span id="ver_fecha_devolucion" class="fw-semibold text-dark" style="font-size: 0.8rem;"></span>
+            </div>
+        </div>
+
+        <button type="button" class="btn btn-secondary w-100 fw-bold rounded-3" id="btnCerrarModalDetallesBtn">Cerrar</button>
     </div>
+</div>
+<script src="../assets/js/prestamos.js"></script>
+</body>
 
-    <script src="../assets/js/prestamos.js"></script>
-    </body>
-
-    </html>
+</html>

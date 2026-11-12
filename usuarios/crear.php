@@ -193,6 +193,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <input
                             type="email"
                             name="gmail"
+                            autocomplete="off"
                             class="form-control"
                             required
                             value="<?= htmlspecialchars($_POST['gmail'] ?? '') ?>"
